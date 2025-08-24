@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Event{% endblock %}
+
+{% block content %}
+  <h2>Create New Event</h2>
+  
+  <div class="row">
+    <div class="col-md-8">
+      <form method="post">
+        {% csrf_token %}
+        
+        <div class="mb-3">
+          <label for="{{ form.name.id_for_label }}" class="form-label">Event Name</label>
+          {{ form.name }}
+          {% if form.name.errors %}
+            <div class="text-danger">
+              {{ form.name.errors|join:", " }}
+            </div>
+          {% endif %}
+        </div>
+        
+        {% if form.description %}
+        <div class="mb-3">
+          <label for="{{ form.description.id_for_label }}" class="form-label">Description (Optional)</label>
+          {{ form.description }}
+          {% if form.description.errors %}
+            <div class="text-danger">
+              {{ form.description.errors|join:", " }}
+            </div>
+          {% endif %}
+        </div>
+        {% endif %}
+        
+        <div class="mb-3">
+          <button type="submit" class="btn btn-primary">Create Event</button>
+          <a href="{% url 'event_list' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+    
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">How it works</h5>
+          <p class="card-text">
+            After creating an event, you'll be able to:
+          </p>
+          <ul class="list-unstyled">
+            <li>✓ Add nicknames to the event</li>
+            <li>✓ Score nicknames with different activities</li>
+            <li>✓ Track points and see leaderboards</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
