@@ -232,3 +232,8 @@ staticfiles/
 # OS files
 .DS_Store
 Thumbs.db
+#certificates
+cert.crt
+cert.key
+cert.pem
+key.pem
