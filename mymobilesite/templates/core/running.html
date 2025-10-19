@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% load static core_extras %}
+
+{% block title %}Running - {{ event.name }}{% endblock %}
+
+{% block content %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h2 class="mb-0">Running</h2>
+      <p class="text-muted">Event: {{ event.name }}</p>
+    </div>
+    <a href="{% url 'event_detail' pk=event.pk %}" class="btn btn-secondary">← Back to Event Details</a>
+  </div>
+
+  <div class="mb-3">
+    <div class="btn-group" role="group">
+      <button id="mode-individual" class="btn btn-outline-secondary btn-sm active">Individual Start</button>
+      <button id="mode-group" class="btn btn-outline-secondary btn-sm">Group Start</button>
+    </div>
+    <button id="save-running-btn" class="btn btn-primary btn-sm ms-3">Save Results</button>
+    <div id="running-status" class="d-inline-block ms-3 text-muted"></div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6">
+      <h4>Participants</h4>
+      <ul class="list-group" id="participants-list">
+        {% for p in participants %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ p.nickname.name }}</strong>
+            </div>
+            <div>
+              <!-- displayed time (final or existing) -->
+              <span class="me-3 time-display" data-nickname-id="{{ p.nickname.id }}">{% if p.result %}{{ p.result.time_seconds|mmss }}{% else %}-{% endif %}</span>
+              <!-- live clock while running -->
+              <span class="me-3 live-clock text-monospace" data-nickname-id="{{ p.nickname.id }}" style="min-width:4ch; display:none;">0:00</span>
+
+              <!-- Individual start/stop buttons -->
+              <button class="btn btn-sm btn-outline-success start-btn individual-start" data-nickname-id="{{ p.nickname.id }}">Start</button>
+              <button class="btn btn-sm btn-outline-danger stop-btn individual-stop" data-nickname-id="{{ p.nickname.id }}" disabled>Stop</button>
+
+              <!-- Reset and Manual Set buttons (to the right) -->
+              <button class="btn btn-sm btn-outline-secondary reset-btn ms-2" data-nickname-id="{{ p.nickname.id }}">Reset</button>
+              <button class="btn btn-sm btn-outline-secondary manual-set-btn ms-1" data-nickname-id="{{ p.nickname.id }}">Set</button>
+
+              <!-- Group start button (shown only when group mode active) -->
+              <button class="btn btn-sm btn-outline-primary start-btn group-start" data-nickname-id="{{ p.nickname.id }}" style="display:none;">Group Start</button>
+              <button class="btn btn-sm btn-outline-danger stop-btn group-stop" data-nickname-id="{{ p.nickname.id }}" disabled style="display:none;">Stop</button>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="col-md-6">
+      <h4>Results</h4>
+      <div class="card">
+        <div class="table-responsive">
+          <table class="table table-striped mb-0">
+            <thead>
+              <tr><th>Name</th><th>Time</th></tr>
+            </thead>
+            <tbody id="running-standings">
+              {% for p in participants %}
+                {% if p.result %}
+                  <tr>
+                    <td>{{ p.nickname.name }}</td>
+                    <td>{{ p.result.time_seconds|mmss }}</td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <form style="display:none;">{% csrf_token %}</form>
+  <script src="{% static 'js/running.js' %}"></script>
+
+  <!-- Manual Set Modal -->
+  <div class="modal fade" id="manualSetModal" tabindex="-1" aria-labelledby="manualSetLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="manualSetLabel">Set Time</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">Enter minutes and seconds separately.</div>
+          <div class="row g-2">
+            <div class="col-6">
+              <input id="manual-set-minutes" type="number" min="0" class="form-control" placeholder="minutes" />
+            </div>
+            <div class="col-6">
+              <input id="manual-set-seconds" type="number" min="0" max="59" class="form-control" placeholder="seconds" />
+            </div>
+          </div>
+          <div id="manual-set-error" class="text-danger small mt-2" style="display:none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button id="manual-set-confirm" type="button" class="btn btn-primary">Set time</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reset Confirm Modal -->
+  <div class="modal fade" id="resetConfirmModal" tabindex="-1" aria-labelledby="resetConfirmLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="resetConfirmLabel">Confirm reset</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to reset this participant's time?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button id="reset-confirm-btn" type="button" class="btn btn-danger">Reset</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

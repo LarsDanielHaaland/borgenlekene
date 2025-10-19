@@ -43,17 +43,37 @@
           </div>
         {% endif %}
       </form>
+      <hr>
+      <h4>Invite someone to this event</h4>
+      <form method="post" action="{% url 'event_detail' pk=event.pk %}">
+        {% csrf_token %}
+        <div class="mb-2">
+          {{ invite_form.email.label_tag }}
+          {{ invite_form.email }}
+        </div>
+        <div class="mb-2">
+          {{ invite_form.facebook_profile.label_tag }}
+          {{ invite_form.facebook_profile }}
+        </div>
+        <div class="mb-2">
+          {{ invite_form.message.label_tag }}
+          {{ invite_form.message }}
+        </div>
+        {% if invite_form.errors %}
+          <div class="alert alert-danger">{{ invite_form.errors }}</div>
+        {% endif %}
+        <input type="hidden" name="invite_submit" value="1" />
+        <div class="mt-2">
+          <button class="btn btn-primary" type="submit">Invite</button>
+          <a class="btn btn-outline-primary ms-2" href="https://www.facebook.com/sharer/sharer.php?u={{ event_url|urlencode }}" target="_blank">Share on Facebook</a>
+        </div>
+      </form>
     </div>
 
     <div class="col-md-6">
       <h3>Activities</h3>
-      {% if total_participants > 0 %}
-        <p class="text-muted">
-          Click to randomly rank all {{ total_participants }} participant{{ total_participants|pluralize }} for each activity.<br>
-          <small>1st place = {{ total_participants }} pts, 2nd = {{ total_participants|add:"-1" }} pts, ..., last = 1 pt</small>
-        </p>
-      {% else %}
-        <p class="text-muted">Add some nicknames first to enable activities!</p>
+      {% if total_participants < 2 %}
+        <p class="text-muted">Add at least two participants to start activities!</p>
       {% endif %}
       
       <div class="score-actions">
@@ -62,16 +82,29 @@
             <div class="card-body p-3">
               <h6 class="card-title mb-1">{{ activity.name }}</h6>
               <p class="card-text text-muted small mb-2">{{ activity.description }}</p>
-              {% if total_participants > 0 %}
-                <form method="post" action="{% url 'score_activity' pk=event.pk activity_id=activity.id %}" style="display: inline;">
-                  {% csrf_token %}
-                  <button type="submit" class="btn btn-primary btn-sm">
-                    Rank Participants
-                  </button>
-                </form>
+              
+              {% if total_participants > 1 %}
+                {# SPECIAL LINK FOR TENNIS (assuming its ID is 1) #}
+                {% if activity.id == 1 %}
+                  <a href="{% url 'tennis_tournament' pk=event.pk %}" class="btn btn-success btn-sm">
+                    Manage Tournament
+                  </a>
+                {% elif activity.id == 4 %}
+                  <a href="{% url 'running_page' pk=event.pk %}" class="btn btn-success btn-sm">
+                    Manage Running
+                  </a>
+                {% else %}
+                {# Fallback for other activities #}
+                  <form method="post" action="{% url 'score_activity' pk=event.pk activity_id=activity.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary btn-sm">
+                      Randomly Rank
+                    </button>
+                  </form>
+                {% endif %}
               {% else %}
                 <button class="btn btn-secondary btn-sm" disabled>
-                  Rank Participants
+                  Manage
                 </button>
               {% endif %}
             </div>

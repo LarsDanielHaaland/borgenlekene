@@ -18,7 +18,32 @@
     <div class="container">
         <header class="d-flex justify-content-between align-items-center mb-4">
             <h1><a href="{% url 'event_list' %}" class="text-decoration-none">Event Scoreboard</a></h1>
-            <a href="{% url 'event_create' %}" class="btn btn-primary">Create New Event</a>
+            <div class="d-flex gap-2">
+                    <a href="{% url 'event_create' %}" class="btn btn-primary">Create New Event</a>
+                    {% if request.user.is_authenticated %}
+                        <div class="me-2">Logged in as <strong>{{ request.user.get_username }}</strong></div>
+                        <a href="{% url 'portal' %}" class="btn btn-outline-secondary">Portal</a>
+                        <a href="{% url 'account_logout' %}" class="btn btn-outline-danger">Logout</a>
+                    {% else %}
+                        {# Use django-allauth's provider_login_url if allauth is installed #}
+                        {% load socialaccount %}
+                        {% load social_utils %}
+                        {% social_app_for "facebook" as has_fb %}
+                        {% if has_fb %}
+                            {% provider_login_url 'facebook' process='login' as fb_login_url %}
+                            {% if fb_login_url %}
+                                <a href="{{ fb_login_url }}" class="btn btn-outline-primary">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-facebook me-1" viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M8.94 8.97V16H6.48V8.97H5V6.7h1.48V5.28c0-1.33.72-2.72 2.73-2.72.78 0 1.59.14 1.59.14v1.74h-1c-.98 0-1.29.62-1.29 1.25v1.02H11l-.23 2.27H9.53z"/>
+                                    </svg>
+                                    Log in with Facebook
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            <a href="{% url 'account_login' %}" class="btn btn-outline-primary">Log in</a>
+                        {% endif %}
+                    {% endif %}
+            </div>
         </header>
 
         {% if messages %}

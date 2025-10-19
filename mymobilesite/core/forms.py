@@ -30,3 +30,19 @@ class NicknameForm(forms.ModelForm):
         if self.event and Nickname.objects.filter(event=self.event, name=name).exists():
             raise forms.ValidationError(f"The nickname '{name}' already exists in this event.")
         return name
+
+
+class InviteForm(forms.Form):
+    """Simple invite form to invite by email or facebook profile URL."""
+    event = forms.ModelChoiceField(queryset=Event.objects.all(), required=False)
+    email = forms.EmailField(required=False)
+    facebook_profile = forms.URLField(required=False)
+    message = forms.CharField(widget=forms.Textarea(attrs={'rows':3}), required=False)
+
+    def clean(self):
+        cleaned = super().clean()
+        email = cleaned.get('email')
+        fb = cleaned.get('facebook_profile')
+        if not email and not fb:
+            raise forms.ValidationError('Provide either an email or a Facebook profile URL to invite.')
+        return cleaned

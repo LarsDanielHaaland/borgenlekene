@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}User Portal{% endblock %}
+
+{% block content %}
+<h2>Your Portal</h2>
+<p>Welcome, {{ request.user.get_username }}. Use this page to invite others to your events.</p>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">Invite someone</h5>
+    <form method="post">
+      {% csrf_token %}
+      <div class="mb-3">
+        {{ form.event.label_tag }}
+        {{ form.event }}
+      </div>
+      <div class="mb-3">
+        {{ form.email.label_tag }}
+        {{ form.email }}
+      </div>
+      <div class="mb-3">
+        {{ form.facebook_profile.label_tag }}
+        {{ form.facebook_profile }}
+      </div>
+      <div class="mb-3">
+        {{ form.message.label_tag }}
+        {{ form.message }}
+      </div>
+      <button type="submit" class="btn btn-primary">Create invitation</button>
+    </form>
+  </div>
+</div>
+
+<h3>Your invitations</h3>
+<ul class="list-group">
+  {% for inv in invitations %}
+  <li class="list-group-item">
+    {{ inv.created_at }} - {% if inv.email %}Email: {{ inv.email }}{% else %}Facebook: {{ inv.facebook_profile }}{% endif %}
+    <br>
+    Event: {{ inv.event }}
+    <p>{{ inv.message }}</p>
+  </li>
+  {% empty %}
+  <li class="list-group-item">No invitations yet.</li>
+  {% endfor %}
+</ul>
+
+{% endblock %}
