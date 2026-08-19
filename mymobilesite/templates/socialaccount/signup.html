@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <div class="container" style="max-width: 480px;">
+    <div class="card">
+      <div class="card-body">
+        <h1 class="mb-3"><i class="fab fa-facebook me-2"></i>Fullfør registrering</h1>
+        <p class="text-muted">Du logger inn med Facebook for første gang. Velg et unikt visningsnavn for å fullføre registreringen.</p>
+
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="post" action="{% url 'socialaccount_signup' %}">
+          {% csrf_token %}
+          {% for field in form %}
+            <div class="mb-3">
+              <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+              {{ field }}
+              {% if field.help_text %}
+                <small class="text-muted d-block">{{ field.help_text }}</small>
+              {% endif %}
+              {% if field.errors %}
+                <div class="alert alert-danger" style="margin-top: 0.5rem;">{{ field.errors|join:", " }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger">{{ form.non_field_errors|join:", " }}</div>
+          {% endif %}
+          <button class="btn btn-primary w-100" type="submit">
+            <i class="fas fa-check me-1"></i>Fullfør registrering
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

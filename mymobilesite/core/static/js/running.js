@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let timers = {}; // nickname_id -> start timestamp
   let recorded = {}; // nickname_id -> time_seconds
   let clockInterval = null;
+  let manualOrder = null; // array of nickname ids representing user ordering for ties
 
   function formatSeconds(ms) {
     // return total seconds (integer)
@@ -33,6 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function recalcStandings() {
+    // Reset any previously computed manual order when rebuilding standings
+    manualOrder = null;
     // Build an array of results from recorded times or existing time spans.
     const rows = [];
     participantList.querySelectorAll('li.list-group-item').forEach(item => {
@@ -63,13 +66,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Sort ascending (best time first)
     rows.sort((a,b) => a.time - b.time);
 
-    // Render only Name and Time columns (best first)
+    // Render Name, Time, Poeng (points mirror update_total_scores: total - rank + 1) and controls column
     standingsBody.innerHTML = '';
-    rows.forEach(r => {
+    const total = rows.length;
+    rows.forEach((r, idx) => {
+      const points = total - idx; // idx is 0-based rank
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${r.name}</td><td>${formatMMSS(r.time)}</td>`;
+      tr.setAttribute('data-nickname-id', r.id);
+      tr.setAttribute('data-time', r.time);
+      tr.innerHTML = `<td>${r.name}</td><td>${formatMMSS(r.time)}</td><td class="fw-bold">${points}</td><td class="order-controls"></td>`;
       standingsBody.appendChild(tr);
     });
+
+      // Add move up/down controls for tied adjacent rows
+      attachRunningMoveControls();
   }
 
   // Toggle modes and show/hide group vs individual buttons
@@ -86,7 +96,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
   modeIndividual.addEventListener('click', () => setMode('individual'));
-  modeGroup.addEventListener('click', () => setMode('group'));
+  modeGroup.addEventListener('click', () => {
+    if (mode !== 'group' && hasAnyRecordedTime()) {
+      if (!confirm('Minst en deltaker har allerede fått en tid. Vil du bytte til gruppestart?')) return;
+    }
+    setMode('group');
+  });
+
+  // Returns true if any participant currently has a time recorded (in-memory or shown in the UI)
+  function hasAnyRecordedTime() {
+    if (Object.keys(recorded).length > 0) return true;
+    return Array.from(participantList.querySelectorAll('.time-display')).some(
+      span => span.textContent.trim() !== '-'
+    );
+  }
 
   // Start/stop handlers
   participantList.addEventListener('click', (e) => {
@@ -257,6 +280,67 @@ document.addEventListener('DOMContentLoaded', () => {
   // stop interval check after stop actions (also on save reload)
   participantList.addEventListener('click', stopClockIntervalIfIdle);
 
+  // Handle move up/down clicks in the standings
+  standingsBody.addEventListener('click', (e) => {
+    const up = e.target.closest('.move-up');
+    const down = e.target.closest('.move-down');
+    if (!up && !down) return;
+    const tr = e.target.closest('tr');
+    if (!tr) return;
+    const time = parseInt(tr.getAttribute('data-time'), 10);
+    if (up) {
+      const prev = tr.previousElementSibling;
+      if (prev) {
+        const prevTime = parseInt(prev.getAttribute('data-time'), 10);
+        if (prevTime === time) {
+          prev.parentNode.insertBefore(tr, prev);
+        }
+      }
+    }
+    if (down) {
+      const next = tr.nextElementSibling;
+      if (next) {
+        const nextTime = parseInt(next.getAttribute('data-time'), 10);
+        if (nextTime === time) {
+          next.parentNode.insertBefore(next, tr);
+        }
+      }
+    }
+    // recompute manual order from DOM and reattach controls
+    manualOrder = Array.from(standingsBody.querySelectorAll('tr')).map(r => parseInt(r.getAttribute('data-nickname-id'), 10));
+    attachRunningMoveControls();
+  });
+
+  function attachRunningMoveControls() {
+    const trs = Array.from(standingsBody.querySelectorAll('tr'));
+    trs.forEach((tr, i) => {
+      const time = parseInt(tr.getAttribute('data-time'), 10);
+      const controls = tr.querySelector('.order-controls');
+      if (!controls) return;
+      controls.innerHTML = '';
+      if (i > 0) {
+        const prev = trs[i-1];
+        const prevTime = parseInt(prev.getAttribute('data-time'), 10);
+        if (prevTime === time) {
+          const up = document.createElement('button');
+          up.className = 'btn btn-sm btn-light move-up me-1';
+          up.textContent = '▲';
+          controls.appendChild(up);
+        }
+      }
+      if (i < trs.length - 1) {
+        const next = trs[i+1];
+        const nextTime = parseInt(next.getAttribute('data-time'), 10);
+        if (nextTime === time) {
+          const down = document.createElement('button');
+          down.className = 'btn btn-sm btn-light move-down';
+          down.textContent = '▼';
+          controls.appendChild(down);
+        }
+      }
+    });
+  }
+
   // Save results: send recorded times to the API for persistence
   saveBtn.addEventListener('click', async () => {
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
@@ -277,6 +361,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const data = await resp.json();
         if (!data.success) throw new Error(data.error || 'Save failed');
+      }
+      // If user reordered tied rows, persist manual ordering for running (activity_id=4)
+      if (manualOrder && manualOrder.length > 0) {
+        const resp2 = await fetch(`${window.location.pathname}api/set_manual_order/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify({ activity_id: 4, order: manualOrder })
+        });
+        const data2 = await resp2.json();
+        if (!data2.success) throw new Error(data2.error || 'Failed to persist manual order');
       }
       statusEl.textContent = 'Saved.';
       // After saving, reload standings from server by reloading page or by

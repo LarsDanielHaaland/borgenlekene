@@ -1,49 +1,94 @@
 {% extends 'base.html' %}
 
-{% block title %}User Portal{% endblock %}
+{% block title %}Min Portal{% endblock %}
 
 {% block content %}
-<h2>Your Portal</h2>
-<p>Welcome, {{ request.user.get_username }}. Use this page to invite others to your events.</p>
+<div style="text-align: center; margin-bottom: 2rem;">
+  <h2 style="border-bottom: 3px solid #6366f1; padding-bottom: 1rem;">
+    <i class="fas fa-user-circle me-3" style="color: #6366f1;"></i>Min Portal
+  </h2>
+  <p class="text-muted" style="font-size: 1.1rem; margin-top: 0.5rem;">
+    Velkommen, <strong>{{ request.user.profile.display_name|default:request.user.get_username }}</strong>.
+  </p>
+</div>
 
-<div class="card mb-4">
-  <div class="card-body">
-    <h5 class="card-title">Invite someone</h5>
-    <form method="post">
-      {% csrf_token %}
-      <div class="mb-3">
-        {{ form.event.label_tag }}
-        {{ form.event }}
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 3rem;">
+  <!-- LEFT: CLAIMED EVENTS -->
+  <div>
+    <div class="card" style="border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+      <div style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; padding: 1.5rem;">
+        <h5 style="margin: 0; color: white; border: none;">
+          <i class="fas fa-trophy me-2"></i>Mine Arrangementer
+        </h5>
       </div>
-      <div class="mb-3">
-        {{ form.email.label_tag }}
-        {{ form.email }}
+      <div class="card-body">
+        {% if claimed_nicknames %}
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for nickname in claimed_nicknames %}
+              <a href="{{ nickname.event.get_absolute_url }}" style="text-decoration: none; color: inherit;">
+                <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; border-left: 4px solid #6366f1;">
+                  <div style="font-weight: 700; color: #1f2937;">
+                    <i class="fas fa-calendar-alt" style="color: #6366f1; margin-right: 0.5rem;"></i>{{ nickname.event.name }}
+                  </div>
+                  <div class="text-muted" style="font-size: 0.9rem; margin-top: 0.25rem;">
+                    <i class="fas fa-user me-1"></i>Spiller som {{ nickname.name }}
+                  </div>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 2rem; color: #9ca3af;">
+            <i class="fas fa-calendar-times" style="font-size: 2rem; margin-bottom: 0.5rem; display: block; opacity: 0.5;"></i>
+            <p>Du er ikke med i noen arrangementer ennå.</p>
+          </div>
+        {% endif %}
       </div>
-      <div class="mb-3">
-        {{ form.facebook_profile.label_tag }}
-        {{ form.facebook_profile }}
+    </div>
+  </div>
+
+  <!-- RIGHT: INVITATIONS LIST -->
+  <div>
+    <div class="card" style="border: none; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+      <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1.5rem;">
+        <h5 style="margin: 0; color: white; border: none;">
+          <i class="fas fa-history me-2"></i>Mine Invitasjoner
+        </h5>
       </div>
-      <div class="mb-3">
-        {{ form.message.label_tag }}
-        {{ form.message }}
+      <div class="card-body">
+        {% if invitations %}
+          <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for inv in invitations %}
+              <a href="{{ inv.event.get_absolute_url }}" style="text-decoration: none; color: inherit;">
+                <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; border-left: 4px solid #10b981;">
+                  <div style="font-weight: 700; color: #1f2937;">
+                    <i class="fas fa-user" style="color: #10b981; margin-right: 0.5rem;"></i>Fra {{ inv.inviter.profile.display_name|default:inv.inviter.get_username }}
+                  </div>
+                  <div class="text-muted" style="font-size: 0.9rem; margin-top: 0.25rem;">
+                    <i class="fas fa-calendar me-1"></i>{{ inv.created_at|date:"d. M Y \k\l. g:i" }}
+                  </div>
+                  <div style="font-weight: 600; color: #6366f1; margin-top: 0.5rem;">
+                    <i class="fas fa-trophy me-1"></i>{{ inv.event }}
+                  </div>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="text-align: center; padding: 2rem; color: #9ca3af;">
+            <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: 0.5rem; display: block; opacity: 0.5;"></i>
+            <p>Ingen invitasjoner ennå.</p>
+          </div>
+        {% endif %}
       </div>
-      <button type="submit" class="btn btn-primary">Create invitation</button>
-    </form>
+    </div>
   </div>
 </div>
 
-<h3>Your invitations</h3>
-<ul class="list-group">
-  {% for inv in invitations %}
-  <li class="list-group-item">
-    {{ inv.created_at }} - {% if inv.email %}Email: {{ inv.email }}{% else %}Facebook: {{ inv.facebook_profile }}{% endif %}
-    <br>
-    Event: {{ inv.event }}
-    <p>{{ inv.message }}</p>
-  </li>
-  {% empty %}
-  <li class="list-group-item">No invitations yet.</li>
-  {% endfor %}
-</ul>
+<div style="text-align: center;">
+  <a href="{% url 'event_list' %}" class="btn btn-outline-primary">
+    <i class="fas fa-arrow-left me-2"></i>Tilbake til Arrangementer
+  </a>
+</div>
 
 {% endblock %}

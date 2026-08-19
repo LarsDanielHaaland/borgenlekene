@@ -228,3 +228,100 @@ def running_page(request, pk):
         'participants': participants,
     }
     return render(request, 'core/running.html', context)
+
+
+def football_tournament(request, pk):
+    """
+    Render a football page where the tournament is played 3 times.
+    Each time one player can be marked "out". Manual ordering may be
+    saved per-round (these are stored as sub-activity rankings) and a
+    final standing can be saved (activity_id=2).
+    """
+    event = get_object_or_404(Event, pk=pk)
+    nicknames = list(event.nicknames.order_by('id').all())
+
+    # Load any existing manual rankings for this activity and per-round
+    # We store per-round rankings using a composite activity id: activity_id*10 + round
+    def load_ranking_for(round_num=None):
+        if round_num is None:
+            aid = 2
+        else:
+            aid = 2 * 10 + int(round_num)
+        rankings = ActivityRanking.objects.filter(event=event, activity_id=aid).order_by('rank').select_related('nickname')
+        return [r.nickname.id for r in rankings]
+
+    round_rankings = {
+        1: load_ranking_for(1),
+        2: load_ranking_for(2),
+        3: load_ranking_for(3),
+    }
+
+    final_ranking = load_ranking_for(None)
+
+    context = {
+        'event': event,
+        'participants': nicknames,
+        'round_rankings': round_rankings,
+        'final_ranking': final_ranking,
+        'activity': {'id': 2, 'name': 'Football'},
+    }
+    return render(request, 'core/football.html', context)
+
+
+def basketball_tournament(request, pk):
+    """
+    Basketball page — mirrors the football view but uses activity_id=3.
+    Behavior and UI are identical to football (3 rounds, manual per-round ordering,
+    compute final totals and tie-breaking UI).
+    """
+    event = get_object_or_404(Event, pk=pk)
+    nicknames = list(event.nicknames.order_by('id').all())
+
+    def load_ranking_for(round_num=None):
+        if round_num is None:
+            aid = 3
+        else:
+            aid = 3 * 10 + int(round_num)
+        rankings = ActivityRanking.objects.filter(event=event, activity_id=aid).order_by('rank').select_related('nickname')
+        return [r.nickname.id for r in rankings]
+
+    round_rankings = {
+        1: load_ranking_for(1),
+        2: load_ranking_for(2),
+        3: load_ranking_for(3),
+    }
+
+    final_ranking = load_ranking_for(None)
+
+    context = {
+        'event': event,
+        'participants': nicknames,
+        'round_rankings': round_rankings,
+        'final_ranking': final_ranking,
+        'activity': {'id': 3, 'name': 'Basketball'},
+    }
+    return render(request, 'core/basketball.html', context)
+
+
+def dice_tournament(request, pk):
+    """
+    Dice game: single final standing only. Rank 1 will be awarded special
+    points (handled in update_total_scores). We persist the final ordering
+    using activity_id=5.
+    """
+    event = get_object_or_404(Event, pk=pk)
+    nicknames = list(event.nicknames.order_by('id').all())
+
+    def load_ranking_for_final():
+        rankings = ActivityRanking.objects.filter(event=event, activity_id=5).order_by('rank').select_related('nickname')
+        return [r.nickname.id for r in rankings]
+
+    final_ranking = load_ranking_for_final()
+
+    context = {
+        'event': event,
+        'participants': nicknames,
+        'final_ranking': final_ranking,
+        'activity': {'id': 5, 'name': 'Dice Game'},
+    }
+    return render(request, 'core/dice.html', context)

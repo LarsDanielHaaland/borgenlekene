@@ -2,6 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 import json
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
 from core.models import Event, Nickname, TennisMatch, ActivityRanking
 
@@ -59,3 +60,36 @@ class TennisMatchTests(TestCase):
         self.assertTrue(rankings.exists())
         top = rankings.order_by('rank').first()
         self.assertEqual(top.nickname, self.c)
+
+    def test_everyone_plays_n_minus_one_matches(self):
+        """Create a full round-robin and assert each participant has N-1 matches."""
+        # create all pairs (canonical order ensures no duplicates)
+        players = [self.a, self.b, self.c]
+        for i in range(len(players)):
+            for j in range(i+1, len(players)):
+                TennisMatch.objects.create(event=self.event, player1=players[i], player2=players[j], winner=players[i])
+
+        total_players = len(players)
+        for p in players:
+            cnt = TennisMatch.objects.filter(event=self.event).filter(Q(player1=p) | Q(player2=p)).count()
+            self.assertEqual(cnt, total_players - 1, f"Player {p} should have {total_players-1} matches")
+
+    def test_each_participant_meets_all_others_and_noone_else(self):
+        """Ensure each player's opponents are exactly the other participants."""
+        players = [self.a, self.b, self.c]
+        # create full set of matches
+        for i in range(len(players)):
+            for j in range(i+1, len(players)):
+                TennisMatch.objects.create(event=self.event, player1=players[i], player2=players[j], winner=players[i])
+
+        for p in players:
+            opponent_ids = set()
+            matches = TennisMatch.objects.filter(event=self.event).filter(Q(player1=p) | Q(player2=p))
+            for m in matches:
+                if m.player1_id == p.id:
+                    opponent_ids.add(m.player2_id)
+                else:
+                    opponent_ids.add(m.player1_id)
+
+            expected = set([other.id for other in players if other.id != p.id])
+            self.assertEqual(opponent_ids, expected, f"Player {p} opponents should be exactly the other participants")

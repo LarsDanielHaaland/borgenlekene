@@ -1,57 +1,123 @@
 {% extends "base.html" %}
 
-{% block title %}Create New Event{% endblock %}
+{% block title %}Opprett Nytt Arrangement{% endblock %}
 
 {% block content %}
-  <h2>Create New Event</h2>
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <h2 style="border-bottom: 3px solid #6366f1; padding-bottom: 1rem;">
+      <i class="fas fa-plus-circle me-3" style="color: #6366f1;"></i>Opprett Nytt Arrangement
+    </h2>
+    <p class="text-muted" style="font-size: 1.1rem; margin-top: 0.5rem;">Start en ny konkurranse og inviter dine venner</p>
+  </div>
   
-  <div class="row">
-    <div class="col-md-8">
-      <form method="post">
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start;">
+    <div>
+      <form method="post" style="background: white; padding: 2rem; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
         {% csrf_token %}
         
-        <div class="mb-3">
-          <label for="{{ form.name.id_for_label }}" class="form-label">Event Name</label>
+        <div class="mb-4">
+          <label for="{{ form.name.id_for_label }}" class="form-label">
+            <i class="fas fa-edit me-2" style="color: #6366f1;"></i>Navn på Arrangement
+          </label>
           {{ form.name }}
           {% if form.name.errors %}
-            <div class="text-danger">
-              {{ form.name.errors|join:", " }}
+            <div class="alert alert-danger mt-2 mb-0">
+              <i class="fas fa-exclamation-circle me-2"></i>{{ form.name.errors|join:", " }}
             </div>
           {% endif %}
         </div>
         
         {% if form.description %}
-        <div class="mb-3">
-          <label for="{{ form.description.id_for_label }}" class="form-label">Description (Optional)</label>
+        <div class="mb-4">
+          <label for="{{ form.description.id_for_label }}" class="form-label">
+            <i class="fas fa-align-left me-2" style="color: #6366f1;"></i>Beskrivelse (Valgfritt)
+          </label>
           {{ form.description }}
           {% if form.description.errors %}
-            <div class="text-danger">
-              {{ form.description.errors|join:", " }}
+            <div class="alert alert-danger mt-2 mb-0">
+              <i class="fas fa-exclamation-circle me-2"></i>{{ form.description.errors|join:", " }}
             </div>
           {% endif %}
         </div>
         {% endif %}
+
+        <div class="mb-4">
+          <label for="{{ form.status.id_for_label }}" class="form-label">
+            <i class="fas fa-calendar-alt me-2" style="color: #6366f1;"></i>Status
+          </label>
+          {{ form.status }}
+          {% if form.status.errors %}
+            <div class="alert alert-danger mt-2 mb-0">
+              <i class="fas fa-exclamation-circle me-2"></i>{{ form.status.errors|join:", " }}
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label for="{{ form.start_date.id_for_label }}" class="form-label">
+              <i class="fas fa-hourglass-start me-2" style="color: #6366f1;"></i>Startdato
+            </label>
+            {{ form.start_date }}
+            {% if form.start_date.errors %}
+              <div class="alert alert-danger mt-2 mb-0">
+                <i class="fas fa-exclamation-circle me-2"></i>{{ form.start_date.errors|join:", " }}
+              </div>
+            {% endif %}
+          </div>
+          <div class="col-md-6">
+            <label for="{{ form.end_date.id_for_label }}" class="form-label">
+              <i class="fas fa-hourglass-end me-2" style="color: #6366f1;"></i>Sluttdato
+            </label>
+            {{ form.end_date }}
+            {% if form.end_date.errors %}
+              <div class="alert alert-danger mt-2 mb-0">
+                <i class="fas fa-exclamation-circle me-2"></i>{{ form.end_date.errors|join:", " }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
         
-        <div class="mb-3">
-          <button type="submit" class="btn btn-primary">Create Event</button>
-          <a href="{% url 'event_list' %}" class="btn btn-secondary">Cancel</a>
+        <div class="d-flex gap-2">
+          <button type="submit" class="btn btn-primary" style="font-size: 1rem; padding: 0.75rem 2rem;">
+            <i class="fas fa-rocket me-2"></i>Opprett Arrangement
+          </button>
+          <a href="{% url 'event_list' %}" class="btn btn-secondary" style="font-size: 1rem; padding: 0.75rem 2rem;">
+            <i class="fas fa-times me-2"></i>Avbryt
+          </a>
         </div>
       </form>
     </div>
     
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title">How it works</h5>
-          <p class="card-text">
-            After creating an event, you'll be able to:
-          </p>
-          <ul class="list-unstyled">
-            <li>✓ Add nicknames to the event</li>
-            <li>✓ Score nicknames with different activities</li>
-            <li>✓ Track points and see leaderboards</li>
-          </ul>
-        </div>
+    <div class="card" style="background: linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%); border: 2px solid #e0e7ff;">
+      <div class="card-body">
+        <h5 class="card-title" style="color: #6366f1;">
+          <i class="fas fa-lightbulb me-2"></i>Hvordan det Fungerer
+        </h5>
+        <ul class="list-unstyled" style="line-height: 2;">
+          <li>
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border-radius: 50%; margin-right: 0.75rem; font-weight: 700; font-size: 0.9rem;">1</span>
+            Opprett ditt arrangement
+          </li>
+          <li>
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border-radius: 50%; margin-right: 0.75rem; font-weight: 700; font-size: 0.9rem;">2</span>
+            Legg til deltakere
+          </li>
+          <li>
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border-radius: 50%; margin-right: 0.75rem; font-weight: 700; font-size: 0.9rem;">3</span>
+            Konkurrér i spill
+          </li>
+          <li>
+            <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border-radius: 50%; margin-right: 0.75rem; font-weight: 700; font-size: 0.9rem;">4</span>
+            Klatre på rankinglisten!
+          </li>
+        </ul>
+        <hr>
+        <p class="text-muted" style="margin-bottom: 0; font-size: 0.9rem;">
+          <i class="fas fa-info-circle me-2" style="color: #6366f1;"></i>
+          <strong>5 Spill Tilgjengelig:</strong><br>
+          🎾 Tennis • ⚽ Fotball • 🏀 Basketball • 🏃 Løping • 🎲 Terning
+        </p>
       </div>
     </div>
   </div>

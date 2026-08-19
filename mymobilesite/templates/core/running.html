@@ -1,52 +1,53 @@
 {% extends "base.html" %}
 {% load static core_extras %}
 
-{% block title %}Running - {{ event.name }}{% endblock %}
+{% block title %}Løping - {{ event.name }}{% endblock %}
 
 {% block content %}
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-      <h2 class="mb-0">Running</h2>
-      <p class="text-muted">Event: {{ event.name }}</p>
+      <h2 class="mb-0">Løping</h2>
+      <p class="text-muted">Arrangement: {{ event.name }}</p>
     </div>
-    <a href="{% url 'event_detail' pk=event.pk %}" class="btn btn-secondary">← Back to Event Details</a>
+    <a href="{% url 'event_detail' pk=event.pk %}" class="btn btn-secondary">← Tilbake til Arrangement</a>
   </div>
 
-  <div class="mb-3">
+  <div class="d-flex align-items-center flex-nowrap mb-3" style="gap: 0.75rem;">
     <div class="btn-group" role="group">
-      <button id="mode-individual" class="btn btn-outline-secondary btn-sm active">Individual Start</button>
-      <button id="mode-group" class="btn btn-outline-secondary btn-sm">Group Start</button>
+      <button id="mode-individual" class="btn btn-outline-secondary btn-sm active">Individuell Start</button>
+      <button id="mode-group" class="btn btn-outline-secondary btn-sm">Gruppestart</button>
     </div>
-    <button id="save-running-btn" class="btn btn-primary btn-sm ms-3">Save Results</button>
-    <div id="running-status" class="d-inline-block ms-3 text-muted"></div>
+    <button id="save-running-btn" class="btn btn-primary btn-sm">Lagre Resultater</button>
+    <div id="running-status" class="text-muted text-nowrap"></div>
+    <div id="running-data" data-event-id="{{ event.pk }}" style="display:none;"></div>
   </div>
 
   <div class="row">
     <div class="col-md-6">
-      <h4>Participants</h4>
+      <h4>Deltakere</h4>
       <ul class="list-group" id="participants-list">
         {% for p in participants %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            <div>
+          <li class="list-group-item d-flex justify-content-between align-items-center flex-nowrap py-2 px-3">
+            <div class="text-nowrap me-2">
               <strong>{{ p.nickname.name }}</strong>
             </div>
-            <div>
+            <div class="d-flex align-items-center flex-nowrap" style="gap: 0.3rem;">
               <!-- displayed time (final or existing) -->
-              <span class="me-3 time-display" data-nickname-id="{{ p.nickname.id }}">{% if p.result %}{{ p.result.time_seconds|mmss }}{% else %}-{% endif %}</span>
+              <span class="time-display text-nowrap" data-nickname-id="{{ p.nickname.id }}" style="min-width: 3.5ch;">{% if p.result %}{{ p.result.time_seconds|mmss }}{% else %}-{% endif %}</span>
               <!-- live clock while running -->
-              <span class="me-3 live-clock text-monospace" data-nickname-id="{{ p.nickname.id }}" style="min-width:4ch; display:none;">0:00</span>
+              <span class="live-clock text-monospace" data-nickname-id="{{ p.nickname.id }}" style="min-width:4ch; display:none;">0:00</span>
 
               <!-- Individual start/stop buttons -->
-              <button class="btn btn-sm btn-outline-success start-btn individual-start" data-nickname-id="{{ p.nickname.id }}">Start</button>
-              <button class="btn btn-sm btn-outline-danger stop-btn individual-stop" data-nickname-id="{{ p.nickname.id }}" disabled>Stop</button>
+              <button class="btn btn-sm btn-outline-success start-btn individual-start py-0 px-2" data-nickname-id="{{ p.nickname.id }}">Start</button>
+              <button class="btn btn-sm btn-outline-danger stop-btn individual-stop py-0 px-2" data-nickname-id="{{ p.nickname.id }}" disabled>Stopp</button>
 
-              <!-- Reset and Manual Set buttons (to the right) -->
-              <button class="btn btn-sm btn-outline-secondary reset-btn ms-2" data-nickname-id="{{ p.nickname.id }}">Reset</button>
-              <button class="btn btn-sm btn-outline-secondary manual-set-btn ms-1" data-nickname-id="{{ p.nickname.id }}">Set</button>
+              <!-- Reset and Manual Set buttons (icon-only to save space) -->
+              <button class="btn btn-sm btn-outline-secondary reset-btn py-0 px-2" data-nickname-id="{{ p.nickname.id }}" title="Tilbakestill"><i class="fas fa-rotate-left"></i></button>
+              <button class="btn btn-sm btn-outline-secondary manual-set-btn py-0 px-2" data-nickname-id="{{ p.nickname.id }}" title="Angi tid"><i class="fas fa-pen"></i></button>
 
               <!-- Group start button (shown only when group mode active) -->
-              <button class="btn btn-sm btn-outline-primary start-btn group-start" data-nickname-id="{{ p.nickname.id }}" style="display:none;">Group Start</button>
-              <button class="btn btn-sm btn-outline-danger stop-btn group-stop" data-nickname-id="{{ p.nickname.id }}" disabled style="display:none;">Stop</button>
+              <button class="btn btn-sm btn-outline-primary start-btn group-start py-0 px-2" data-nickname-id="{{ p.nickname.id }}" style="display:none;">Gruppestart</button>
+              <button class="btn btn-sm btn-outline-danger stop-btn group-stop py-0 px-2" data-nickname-id="{{ p.nickname.id }}" disabled style="display:none;">Stopp</button>
             </div>
           </li>
         {% endfor %}
@@ -54,12 +55,12 @@
     </div>
 
     <div class="col-md-6">
-      <h4>Results</h4>
+      <h4>Resultater</h4>
       <div class="card">
         <div class="table-responsive">
-          <table class="table table-striped mb-0">
+          <table class="table table-striped table-sm mb-0">
             <thead>
-              <tr><th>Name</th><th>Time</th></tr>
+              <tr><th>Navn</th><th>Tid</th><th>Poeng</th><th></th></tr>
             </thead>
             <tbody id="running-standings">
               {% for p in participants %}
@@ -67,6 +68,7 @@
                   <tr>
                     <td>{{ p.nickname.name }}</td>
                     <td>{{ p.result.time_seconds|mmss }}</td>
+                    <td></td>
                   </tr>
                 {% endif %}
               {% endfor %}
@@ -85,24 +87,24 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="manualSetLabel">Set Time</h5>
+          <h5 class="modal-title" id="manualSetLabel">Angi Tid</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-2">Enter minutes and seconds separately.</div>
+          <div class="mb-2">Angi minutter og sekunder hver for seg.</div>
           <div class="row g-2">
             <div class="col-6">
-              <input id="manual-set-minutes" type="number" min="0" class="form-control" placeholder="minutes" />
+              <input id="manual-set-minutes" type="number" min="0" class="form-control" placeholder="minutter" />
             </div>
             <div class="col-6">
-              <input id="manual-set-seconds" type="number" min="0" max="59" class="form-control" placeholder="seconds" />
+              <input id="manual-set-seconds" type="number" min="0" max="59" class="form-control" placeholder="sekunder" />
             </div>
           </div>
           <div id="manual-set-error" class="text-danger small mt-2" style="display:none;"></div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button id="manual-set-confirm" type="button" class="btn btn-primary">Set time</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+          <button id="manual-set-confirm" type="button" class="btn btn-primary">Angi Tid</button>
         </div>
       </div>
     </div>
@@ -113,15 +115,15 @@
     <div class="modal-dialog modal-sm">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="resetConfirmLabel">Confirm reset</h5>
+          <h5 class="modal-title" id="resetConfirmLabel">Bekreft tilbakestilling</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <p>Are you sure you want to reset this participant's time?</p>
+          <p>Er du sikker på at du vil tilbakestille denne deltakeres tid?</p>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button id="reset-confirm-btn" type="button" class="btn btn-danger">Reset</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>
+          <button id="reset-confirm-btn" type="button" class="btn btn-danger">Tilbakestill</button>
         </div>
       </div>
     </div>

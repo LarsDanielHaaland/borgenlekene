@@ -2,7 +2,7 @@
 {% extends "base.html" %}
 {% load static %}
 
-{% block title %}Tennis Tournament - {{ event.name }}{% endblock %}
+{% block title %}Tennis Turnering - {{ event.name }}{% endblock %}
 
 {% block content %}
   {# This hidden div passes the API URL to our JavaScript file #}
@@ -11,135 +11,138 @@
        style="display: none;">
   </div>
 
-  <div class="d-flex justify-content-between align-items-center mb-3">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem;">
     <div>
-      <h2 class="mb-0">{{ activity.name }} Tournament</h2>
-      <p class="text-muted">Part of the event: {{ event.name }}</p>
+      <h2 style="border-bottom: 3px solid #10b981; padding-bottom: 1rem; margin: 0;">
+        <i class="fas fa-tennis-ball" style="color: #10b981; margin-right: 0.75rem;"></i>{{ activity.name }} Turnering
+      </h2>
+      <p class="text-muted" style="margin-top: 0.5rem; font-size: 0.9rem;">
+        <i class="fas fa-trophy me-1" style="color: #10b981;"></i>{{ event.name }}
+      </p>
     </div>
-    <a href="{% url 'event_detail' pk=event.pk %}" class="btn btn-secondary">← Back to Event Details</a>
+    <a href="{% url 'event_detail' pk=event.pk %}" class="btn btn-secondary">
+      <i class="fas fa-arrow-left me-2"></i>Tilbake
+    </a>
   </div>
 
-  <style>
-    /* Keep match buttons a fixed size so toggling classes doesn't shift layout */
-    .winner-btn {
-      min-width: 9rem; /* adjust as needed */
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
-    }
-    .btn-group.match-pair {
-      display: flex;
-      gap: 0.5rem;
-      justify-content: center;
-      align-items: center;
-    }
-    .match-card {
-      /* ensure consistent card height for nicer alignment */
-      min-height: 56px;
-    }
-    .winner-updated {
-      transition: background-color 0.2s ease, color 0.2s ease;
-    }
-  </style>
-
   {% if is_concluded %}
-    <div class="alert alert-success" role="alert">
-      <h4 class="alert-heading">Tournament Complete!</h4>
-      <p>All matches have been played. The results have been calculated and saved to the overall event leaderboard.</p>
+    <div class="alert alert-success" role="alert" style="border-left: 4px solid #10b981;">
+      <i class="fas fa-check-circle me-2"></i>
+      <h4 class="alert-heading" style="margin-top: 0;">Turnering Fullført!</h4>
+      <p style="margin-bottom: 0;">Alle kamper er spilt. Resultatene er lagret på arrangementets rankingliste.</p>
     </div>
   {% endif %}
-  <hr>
 
-  <div class="row">
-    <div class="col-md-7">
-      <h3>Match Schedule</h3>
-      <div class="mb-2">
-        <button id="save-results-btn" class="btn btn-primary btn-sm">Save Results</button>
-        <small class="text-muted ms-2">Click to persist all declared winners and update standings.</small>
-        <div id="save-status" class="d-inline-block ms-3 text-muted"></div>
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start;">
+    <!-- LEFT: MATCH SCHEDULE -->
+    <div class="activity-section">
+      <h3 style="border: none; color: #1f2937; margin-bottom: 1.5rem;">
+        <i class="fas fa-chess me-2" style="color: #10b981;"></i>Kampprogram
+      </h3>
+      
+      <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem;">
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <button id="save-results-btn" class="btn btn-primary btn-sm">
+            <i class="fas fa-save me-1"></i>Lagre Endringer
+          </button>
+        </div>
+        <small class="text-muted" style="display: block; margin-top: 0.75rem;">
+          <i class="fas fa-info-circle me-1"></i>Klikk på spillernavn for å markere vinnere, og bruk pilene i tabellen for eventuelle tie-breaks.
+        </small>
+        <div id="save-status" class="text-muted" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
       </div>
+
       <div id="match-list">
         {% if matches %}
           {% regroup matches by round as round_list %}
           {% for round in round_list %}
-            <h5 class="mt-3">Round {{ round.grouper }}</h5>
-            {% for item in round.list %}
-              <div class="card mb-2 match-card">
-                <div class="card-body p-3">
-                  <div class="row align-items-center">
-                      <div class="text-center">
-                          <small class="text-muted d-block mb-1">
-                            {% if item.match %}
-                              Winner declared. Click the other player to change.
-                            {% else %}
-                              Declare a winner:
-                            {% endif %}
-                          </small>
-                          <div class="btn-group match-pair" role="group">
-                            {# Button for Player 1 #}
-                            <button class="btn btn-sm winner-btn 
-                                           {% if item.match and item.match.winner == item.player1 %}btn-success{% else %}btn-outline-primary{% endif %}" 
-                                    data-player1-id="{{ item.player1.id }}" 
-                                    data-player2-id="{{ item.player2.id }}"
-                                    data-winner-id="{{ item.player1.id }}">
-                              {{ item.player1.name }}
-                            </button>
-                            {# Button for Player 2 #}
-                            <button class="btn btn-sm winner-btn 
-                                           {% if item.match and item.match.winner == item.player2 %}btn-success{% else %}btn-outline-primary{% endif %}" 
-                                    data-player1-id="{{ item.player1.id }}" 
-                                    data-player2-id="{{ item.player2.id }}"
-                                    data-winner-id="{{ item.player2.id }}">
-                              {{ item.player2.name }}
-                            </button>
-                          </div>
-                        </div>
-                </div>
+            <div style="margin-bottom: 2rem;">
+              <h5 style="color: #374151; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e5e7eb;">
+                <i class="fas fa-circle-notch me-2" style="color: #10b981; font-size: 0.7rem;"></i>Runde {{ round.grouper }}
+              </h5>
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                {% for item in round.list %}
+                  <div style="background: white; border: 2px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1)'; this.style.borderColor='#10b981';" onmouseout="this.style.boxShadow='none'; this.style.borderColor='#e5e7eb';">
+                    <div style="display: flex; gap: 0.75rem;">
+                      {# Button for Player 1 #}
+                      <button class="btn btn-sm winner-btn" 
+                              style="flex: 1; min-width: 0; {% if item.match and item.match.winner == item.player1 %}background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;{% else %}border: 2px solid #e5e7eb; color: #374151;{% endif %} transition: all 0.3s ease; font-weight: 600;"
+                              data-player1-id="{{ item.player1.id }}" 
+                              data-player2-id="{{ item.player2.id }}"
+                              data-winner-id="{{ item.player1.id }}">
+                        {{ item.player1.name }}
+                      </button>
+                      <div style="display: flex; align-items: center; padding: 0 0.5rem; color: #9ca3af; font-weight: 700;">vs</div>
+                      {# Button for Player 2 #}
+                      <button class="btn btn-sm winner-btn" 
+                              style="flex: 1; min-width: 0; {% if item.match and item.match.winner == item.player2 %}background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;{% else %}border: 2px solid #e5e7eb; color: #374151;{% endif %} transition: all 0.3s ease; font-weight: 600;"
+                              data-player1-id="{{ item.player1.id }}" 
+                              data-player2-id="{{ item.player2.id }}"
+                              data-winner-id="{{ item.player2.id }}">
+                        {{ item.player2.name }}
+                      </button>
+                    </div>
+                  </div>
+                {% endfor %}
               </div>
-            {% endfor %}
+            </div>
           {% endfor %}
         {% else %}
-          <div class="alert alert-info">
-            Add at least two participants to the main event page to generate matches.
+          <div class="alert alert-info" style="border-left: 4px solid #0ea5e9;">
+            <i class="fas fa-info-circle me-2"></i>
+            Legg til minst 2 deltakere for å generere kamper
           </div>
         {% endif %}
       </div>
     </div>
 
-    <div class="col-md-5">
-      <h3>{% if is_concluded %}Final {% endif %}Standings</h3>
-      <div class="card">
-        <div class="table-responsive">
-          <table class="table table-striped table-hover mb-0">
-            <thead class="table-dark">
+    <!-- RIGHT: FINAL STANDINGS -->
+    <div class="activity-section">
+      <h3 style="border: none; color: #1f2937; margin-bottom: 1.5rem; text-align: center;">
+        <i class="fas fa-crown me-2" style="color: #10b981;"></i>{% if is_concluded %}Sluttresultat{% else %}Rangering{% endif %}
+      </h3>
+
+      {% if standings %}
+        <div class="table-responsive" style="margin-bottom: 1.5rem;">
+          <table class="table" id="final-standing" style="margin: 0;">
+            <thead style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
               <tr>
-                <th scope="col">Rank</th>
-                <th scope="col">Name</th>
-                <th scope="col">Wins</th>
-                <th scope="col">Losses</th>
+                <th>Plass</th>
+                <th>Spiller</th>
+                <th>Seire</th>
+                <th>Tap</th>
+                <th>Kontroller</th>
               </tr>
             </thead>
-            <tbody id="standings-body">
+            <tbody>
               {% for standing in standings %}
-                <tr>
-                  <th scope="row">{{ forloop.counter }}</th>
-                  <td>{{ standing.nickname.name }}</td>
-                  <td>{{ standing.wins }}</td>
-                  <td>{{ standing.losses }}</td>
-                </tr>
-              {% empty %}
-                <tr>
-                  <td colspan="4" class="text-center text-muted">No participants yet.</td>
+                <tr data-nickname-id="{{ standing.nickname.id }}" data-wins="{{ standing.wins }}" data-losses="{{ standing.losses }}" style="transition: all 0.3s ease;">
+                  <td class="rank-cell" style="font-weight: 700; font-size: 1.1rem;">{{ forloop.counter }}</td>
+                  <td style="font-weight: 600;">{{ standing.nickname.name }}</td>
+                  <td class="wins-cell" style="font-weight: 700; color: #10b981; font-size: 1.1rem;">{{ standing.wins }}</td>
+                  <td class="losses-cell" style="font-weight: 600; color: #6b7280;">{{ standing.losses }}</td>
+                  <td class="order-controls"></td>
                 </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
-      </div>
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; padding: 1rem;">
+          <button id="save-tiebreaks-btn" class="btn btn-info btn-sm">
+            <i class="fas fa-arrows-alt-v me-1"></i>Lagre Tiebreaks
+          </button>
+          <div id="tiebreaks-status" class="text-muted" style="margin-top: 0.5rem; font-size: 0.9rem;"></div>
+        </div>
+      {% else %}
+        <div style="text-align: center; padding: 2rem; color: #9ca3af;">
+          <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 0.5rem; display: block; opacity: 0.5;"></i>
+          <p>Ingen deltakere ennå</p>
+        </div>
+      {% endif %}
     </div>
   </div>
   
   {% comment %} This hidden form is a good way to ensure the CSRF token is always on the page for our JS to find. {% endcomment %}
   <form style="display:none;">{% csrf_token %}</form>
-  <script src="{% static 'js/tennis_tournament.js' %}"></script>
+  <script src="{% static 'js/tennis_tournament.js' %}?v=20260814"></script>
 {% endblock %}

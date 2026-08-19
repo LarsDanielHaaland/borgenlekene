@@ -1,35 +1,165 @@
 {% extends "base.html" %}
 
-{% block title %}Events{% endblock %}
+{% block title %}Arrangementer{% endblock %}
 
 {% block content %}
-  <h2>All Events</h2>
-  
-  {% if events %}
-    <ul class="list-group">
-      {% for event in events %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          <div>
-            <a href="{% url 'event_detail' pk=event.pk %}" class="text-decoration-none">
-              <h5 class="mb-1">{{ event.name }}</h5>
-            </a>
-            {% if event.description %}
-              <p class="mb-1 text-muted">{{ event.description }}</p>
-            {% endif %}
-            <small class="text-muted">Created: {{ event.created_at|date:"M d, Y" }}</small>
-          </div>
-          <div class="text-end">
-            <span class="badge bg-secondary rounded-pill">{{ event.get_nickname_count }} nickname{{ event.get_nickname_count|pluralize }}</span>
-          </div>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <div class="alert alert-info" role="alert">
-      <h4 class="alert-heading">No events yet!</h4>
-      <p>Create your first event to get started with tracking nicknames and scores.</p>
-      <hr>
-      <a href="{% url 'event_create' %}" class="btn btn-primary">Create Your First Event</a>
+  <div style="text-align: center; margin-bottom: 3rem;">
+    <h2 style="border-bottom: 3px solid #6366f1; padding-bottom: 1rem;">
+      <i class="fas fa-calendar-alt me-3" style="color: #6366f1;"></i>Alle Arrangementer
+    </h2>
+    <p class="text-muted" style="font-size: 1.1rem;">Delta i konkurranser og følg poengene dine på tvers av fem episke spill</p>
+  </div>
+
+  {% if featured_events %}
+    <div style="margin-bottom: 3rem;">
+      <h3 class="event-section-title">
+        <i class="fas fa-star" style="margin-right: 0.5rem;"></i>Utvalgte Arrangementer
+      </h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        {% for event in featured_events %}
+          <a href="{% url 'event_detail' pk=event.pk %}" class="text-decoration-none">
+            <div class="card event-card">
+              <div style="padding: 0.5rem 1.5rem 0; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 1rem 1.5rem;">
+                <span class="badge bg-dark" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                  <i class="fas fa-bolt me-1"></i>UTVALGT
+                </span>
+              </div>
+              <div class="card-body">
+                <h5 class="event-card-title">{{ event.name }}</h5>
+                {% if event.description %}
+                  <p class="event-card-description">{{ event.description }}</p>
+                {% endif %}
+                <p class="event-card-meta">
+                  <i class="fas fa-calendar me-1"></i>{{ event.created_at|date:"d. M Y" }}
+                </p>
+              </div>
+              <div style="padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; background: #f9fafb;">
+                <span class="event-status-badge bg-warning text-dark">
+                  <i class="fas fa-users me-1"></i>{{ event.get_nickname_count }} deltaker{{ event.get_nickname_count|pluralize:"e" }}
+                </span>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if ongoing_events %}
+    <div style="margin-bottom: 3rem;">
+      <h3 class="event-section-title">
+        <i class="fas fa-play-circle" style="margin-right: 0.5rem;"></i>Arrangementer Under Vei
+      </h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        {% for event in ongoing_events %}
+          <a href="{% url 'event_detail' pk=event.pk %}" class="text-decoration-none">
+            <div class="card event-card">
+              <div style="padding: 0.5rem 1.5rem 0; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 1rem 1.5rem;">
+                <span class="badge bg-dark" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                  <i class="fas fa-circle me-1" style="font-size: 0.6rem;"></i>AKTIV
+                </span>
+              </div>
+              <div class="card-body">
+                <h5 class="event-card-title">{{ event.name }}</h5>
+                {% if event.description %}
+                  <p class="event-card-description">{{ event.description }}</p>
+                {% endif %}
+                <p class="event-card-meta">
+                  <i class="fas fa-calendar me-1"></i>{{ event.created_at|date:"d. M Y" }}
+                </p>
+              </div>
+              <div style="padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; background: #f9fafb;">
+                <span class="event-status-badge bg-success">
+                  <i class="fas fa-users me-1"></i>{{ event.get_nickname_count }} deltaker{{ event.get_nickname_count|pluralize:"e" }}
+                </span>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if future_events %}
+    <div style="margin-bottom: 3rem;">
+      <h3 class="event-section-title">
+        <i class="fas fa-calendar-plus" style="margin-right: 0.5rem;"></i>Kommende Arrangementer
+      </h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        {% for event in future_events %}
+          <a href="{% url 'event_detail' pk=event.pk %}" class="text-decoration-none">
+            <div class="card event-card">
+              <div style="padding: 0.5rem 1.5rem 0; background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%); color: white; padding: 1rem 1.5rem;">
+                <span class="badge bg-dark" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                  <i class="fas fa-hourglass-start me-1"></i>KOMMENDE
+                </span>
+              </div>
+              <div class="card-body">
+                <h5 class="event-card-title">{{ event.name }}</h5>
+                {% if event.description %}
+                  <p class="event-card-description">{{ event.description }}</p>
+                {% endif %}
+                <p class="event-card-meta">
+                  <i class="fas fa-calendar me-1"></i>{{ event.created_at|date:"d. M Y" }}
+                </p>
+              </div>
+              <div style="padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; background: #f9fafb;">
+                <span class="event-status-badge bg-info">
+                  <i class="fas fa-users me-1"></i>{{ event.get_nickname_count }} deltaker{{ event.get_nickname_count|pluralize:"e" }}
+                </span>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if past_events %}
+    <div style="margin-bottom: 3rem;">
+      <h3 class="event-section-title">
+        <i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i>Avsluttede Arrangementer
+      </h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        {% for event in past_events %}
+          <a href="{% url 'event_detail' pk=event.pk %}" class="text-decoration-none">
+            <div class="card event-card">
+              <div style="padding: 0.5rem 1.5rem 0; background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: white; padding: 1rem 1.5rem;">
+                <span class="badge bg-dark" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">
+                  <i class="fas fa-archive me-1"></i>ARKIVERT
+                </span>
+              </div>
+              <div class="card-body">
+                <h5 class="event-card-title">{{ event.name }}</h5>
+                {% if event.description %}
+                  <p class="event-card-description">{{ event.description }}</p>
+                {% endif %}
+                <p class="event-card-meta">
+                  <i class="fas fa-calendar me-1"></i>{{ event.created_at|date:"d. M Y" }}
+                </p>
+              </div>
+              <div style="padding: 1rem 1.5rem; border-top: 1px solid #e5e7eb; background: #f9fafb;">
+                <span class="event-status-badge bg-secondary">
+                  <i class="fas fa-users me-1"></i>{{ event.get_nickname_count }} deltaker{{ event.get_nickname_count|pluralize:"e" }}
+                </span>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% if not featured_events and not ongoing_events and not future_events and not past_events %}
+    <div style="text-align: center; padding: 3rem 2rem; background: linear-gradient(135deg, #f0f9ff 0%, #f0fdf4 100%); border-radius: 1rem; border: 2px dashed #cbd5e1;">
+      <div style="font-size: 4rem; margin-bottom: 1rem;">🎯</div>
+      <h3 style="color: #334155; margin-bottom: 1rem; border: none; padding: 0;">Ingen Arrangementer Ennå!</h3>
+      <p class="text-muted" style="font-size: 1.1rem; margin-bottom: 2rem;">
+        Vær den første til å opprette et arrangement og utfordre dine venner.
+      </p>
+      <a href="{% url 'event_create' %}" class="btn btn-primary" style="font-size: 1.1rem; padding: 0.75rem 2rem;">
+        <i class="fas fa-star me-2"></i>Opprett Ditt Første Arrangement
+      </a>
     </div>
   {% endif %}
 {% endblock %}

@@ -5,21 +5,173 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Tournament data element not found!');
       return;
     }
+
+    function attachStandingsMoveControls() {
+      const finalTable = document.getElementById('final-standing');
+      const tbody = finalTable ? finalTable.querySelector('tbody') : document.getElementById('standings-body');
+      if (!tbody) return;
+
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.forEach((tr, i) => {
+        const wins = Number(tr.getAttribute('data-wins') || 0);
+        const controls = tr.querySelector('.order-controls');
+        if (!controls) return;
+        controls.innerHTML = '';
+
+        if (i > 0) {
+          const prev = rows[i - 1];
+          const prevWins = Number(prev.getAttribute('data-wins') || 0);
+          if (prevWins === wins) {
+            const up = document.createElement('button');
+            up.type = 'button';
+            up.className = 'btn btn-sm btn-light move-up me-1';
+            up.textContent = '▲';
+            controls.appendChild(up);
+          }
+        }
+
+        if (i < rows.length - 1) {
+          const next = rows[i + 1];
+          const nextWins = Number(next.getAttribute('data-wins') || 0);
+          if (nextWins === wins) {
+            const down = document.createElement('button');
+            down.type = 'button';
+            down.className = 'btn btn-sm btn-light move-down';
+            down.textContent = '▼';
+            controls.appendChild(down);
+          }
+        }
+      });
+
+      if (tbody._tennisTieHandler) {
+        tbody.removeEventListener('click', tbody._tennisTieHandler);
+      }
+
+      tbody._tennisTieHandler = (event) => {
+        const upButton = event.target.closest('.move-up');
+        const downButton = event.target.closest('.move-down');
+        if (!upButton && !downButton) return;
+
+        const tr = event.target.closest('tr');
+        if (!tr) return;
+
+        const wins = Number(tr.getAttribute('data-wins') || 0);
+        const prev = tr.previousElementSibling;
+        const next = tr.nextElementSibling;
+
+        if (upButton && prev) {
+          const prevWins = Number(prev.getAttribute('data-wins') || 0);
+          if (prevWins === wins) {
+            prev.parentNode.insertBefore(tr, prev);
+          }
+        }
+
+        if (downButton && next) {
+          const nextWins = Number(next.getAttribute('data-wins') || 0);
+          if (nextWins === wins) {
+            next.parentNode.insertBefore(next, tr);
+          }
+        }
+
+        const updatedRows = Array.from(tbody.querySelectorAll('tr'));
+        updatedRows.forEach((row, index) => {
+          const rankCell = row.querySelector('.rank-cell');
+          if (rankCell) rankCell.textContent = index + 1;
+        });
+
+        tennisManualOrder = updatedRows.map(row => Number(row.getAttribute('data-nickname-id')));
+        attachStandingsMoveControls();
+      };
+
+      tbody.addEventListener('click', tbody._tennisTieHandler);
+    }
+
+    let tennisManualOrder = null;
+
+    // initial attach for existing server-rendered standings
+    attachStandingsMoveControls();
+  
+    // Save tiebreaks button: save the current standings order for tiebreak resolution
+    const saveTiebreaksBtn = document.getElementById('save-tiebreaks-btn');
+    if (saveTiebreaksBtn) {
+      saveTiebreaksBtn.addEventListener('click', async () => {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        const statusEl = document.getElementById('tiebreaks-status');
+        if (!csrfToken) {
+          if (statusEl) statusEl.textContent = 'CSRF token not found; cannot save tiebreaks.';
+          return;
+        }
+        const finalTable = document.getElementById('final-standing');
+        const tbody = finalTable ? finalTable.querySelector('tbody') : document.getElementById('standings-body');
+        if (!tbody) {
+          if (statusEl) statusEl.textContent = 'Standings table not found.';
+          return;
+        }
+        const order = Array.from(tbody.querySelectorAll('tr')).map(r => parseInt(r.getAttribute('data-nickname-id'), 10));
+        if (!order.length) {
+          if (statusEl) statusEl.textContent = 'No standings to save.';
+          return;
+        }
+        try {
+          const response = await fetch(`${window.location.pathname}api/set_manual_order/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ activity_id: 1, order: order })
+          });
+          const data = await response.json();
+          if (data.success) {
+            if (statusEl) statusEl.textContent = 'Tiebreaks lagret!';
+          } else {
+            if (statusEl) statusEl.textContent = 'Error: ' + (data.error || 'Unknown error');
+          }
+        } catch (err) {
+          console.error('Error saving tiebreaks:', err);
+          if (statusEl) statusEl.textContent = 'Network error: ' + err;
+        }
+      });
+    }
   
     // Read the URL from the data attribute
     const recordMatchUrl = tournamentData.dataset.recordMatchUrl;
     const winnerButtons = document.querySelectorAll('.winner-btn');
     const saveBtn = document.getElementById('save-results-btn');
+
+    function syncWinnerState(matchButtons, winnerId) {
+      matchButtons.forEach(b => {
+        const isWinner = Number(b.dataset.winnerId) === Number(winnerId);
+
+        b.classList.remove('btn-success', 'btn-outline-primary');
+        b.classList.remove('btn-outline-secondary');
+
+        if (isWinner) {
+          b.classList.add('btn-success');
+          b.setAttribute('aria-pressed', 'true');
+          b.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+          b.style.border = '2px solid #10b981';
+          b.style.color = '#fff';
+        } else {
+          b.classList.add('btn-outline-primary');
+          b.setAttribute('aria-pressed', 'false');
+          b.style.background = '';
+          b.style.border = '2px solid #e5e7eb';
+          b.style.color = '#374151';
+        }
+
+        b.classList.add('winner-updated');
+        setTimeout(() => b.classList.remove('winner-updated'), 300);
+      });
+    }
     
     winnerButtons.forEach(button => {
       button.addEventListener('click', (event) => {
         const btn = event.currentTarget;
         const { player1Id, player2Id, winnerId } = btn.dataset;
-        
-        // Get CSRF token. This requires a {% csrf_token %} to be present somewhere
-        // on the rendered page, usually inside a <form>.
+        const matchButtons = btn.parentElement ? btn.parentElement.querySelectorAll('.winner-btn') : [btn];
+
+        syncWinnerState(matchButtons, winnerId);
+
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-        
+
     if (!csrfToken) {
       const statusEl = document.getElementById('save-status');
       if (statusEl) statusEl.textContent = 'CSRF token not found; cannot record match now.';
@@ -47,36 +199,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .then(data => {
           if (data.success) {
-            // On success, update the two buttons for this match in-place so
-            // the players don't jump positions. Find sibling buttons that
-            // share the same player1/player2 data attributes and toggle
-            // classes so the declared winner becomes green.
-            // Match buttons can be rendered with player1/player2 in either
-            // order in the markup, so select both permutations to update
-            const selectorA = `.winner-btn[data-player1-id="${player1Id}"][data-player2-id="${player2Id}"]`;
-            const selectorB = `.winner-btn[data-player1-id="${player2Id}"][data-player2-id="${player1Id}"]`;
-            const matchButtons = document.querySelectorAll(`${selectorA}, ${selectorB}`);
-            matchButtons.forEach(b => {
-              const bid = b.dataset.winnerId;
-              if (bid === winnerId) {
-                b.classList.remove('btn-outline-primary');
-                b.classList.add('btn-success');
-                b.setAttribute('aria-pressed', 'true');
-                b.classList.add('winner-updated');
-                setTimeout(() => b.classList.remove('winner-updated'), 300);
-              } else {
-                b.classList.remove('btn-success');
-                b.classList.add('btn-outline-primary');
-                b.setAttribute('aria-pressed', 'false');
-                b.classList.add('winner-updated');
-                setTimeout(() => b.classList.remove('winner-updated'), 300);
-              }
-            });
-
-            // Also update the standings area by fetching a fragment or
-            // simply notifying the user. For simplicity we update the button
-            // states only; the user can refresh the page to see updated
-            // standings, or we can implement a small AJAX refresher later.
+            syncWinnerState(matchButtons, winnerId);
           } else {
             const statusEl = document.getElementById('save-status');
             if (statusEl) statusEl.textContent = `Error recording match: ${data.error}`;
@@ -140,19 +263,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Update standings table if we received standings
           if (latestStandings) {
-            const tbody = document.getElementById('standings-body');
-            tbody.innerHTML = '';
-            latestStandings.forEach((s, idx) => {
-              const tr = document.createElement('tr');
-              tr.innerHTML = `
-                <th scope="row">${idx + 1}</th>
-                <td>${s.name}</td>
-                <td>${s.wins}</td>
-                <td>${s.losses}</td>
-              `;
-              tbody.appendChild(tr);
-            });
-            if (statusEl) statusEl.textContent = 'Results saved and standings updated.';
+            const finalTable = document.getElementById('final-standing');
+            const tbody = finalTable ? finalTable.querySelector('tbody') : document.getElementById('standings-body');
+            if (tbody) {
+              tbody.innerHTML = '';
+              latestStandings.forEach((s, idx) => {
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-nickname-id', s.id || '');
+                tr.setAttribute('data-wins', s.wins || 0);
+                tr.setAttribute('data-losses', s.losses || 0);
+                tr.innerHTML = `
+                  <td class="rank-cell" style="font-weight: 700; font-size: 1.1rem;">${idx + 1}</td>
+                  <td style="font-weight: 600;">${s.name}</td>
+                  <td class="wins-cell" style="font-weight: 700; color: #10b981; font-size: 1.1rem;">${s.wins}</td>
+                  <td class="losses-cell" style="font-weight: 600; color: #6b7280;">${s.losses}</td>
+                  <td class="order-controls"></td>
+                `;
+                tbody.appendChild(tr);
+              });
+              attachStandingsMoveControls();
+            }
+            if (statusEl) statusEl.textContent = 'Kampresultater lagret. Lagre Tiebreaks for å lagre rekkefølgen.';
           } else {
             if (statusEl) statusEl.textContent = 'Results saved. Refresh the page to see updated standings.';
           }
