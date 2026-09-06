@@ -55,11 +55,11 @@
                     <div class="participant-name">{{ nickname.name }}</div>
                     {% if nickname.user %}
                       <small class="participant-status">
-                        <i class="fas fa-check-circle" style="color: #10b981;"></i> Krevd av {{ nickname.user.username }}
+                        <i class="fas fa-check-circle" style="color: #10b981;"></i> {{ nickname.user.username }}
                       </small>
                     {% else %}
                       <small class="participant-status">
-                        <i class="fas fa-lock-open" style="color: #f59e0b;"></i> Ikke krevd
+                        <i class="fas fa-lock-open" style="color: #f59e0b;"></i>
                       </small>
                     {% endif %}
                   </div>
@@ -201,23 +201,23 @@
                 {% if total_participants > 1 %}
                   {% if activity.id == 1 %}
                     <a href="{% url 'tennis_tournament' pk=event.pk %}" class="btn btn-success btn-sm">
-                      <i class="fas fa-play me-1"></i>Spill
+                      <i class="fas fa-play me-1"></i>Gå til
                     </a>
                   {% elif activity.id == 2 %}
                     <a href="{% url 'football_tournament' pk=event.pk %}" class="btn btn-success btn-sm">
-                      <i class="fas fa-play me-1"></i>Spill
+                      <i class="fas fa-play me-1"></i>Gå til
                     </a>
                   {% elif activity.id == 3 %}
                     <a href="{% url 'basketball_tournament' pk=event.pk %}" class="btn btn-success btn-sm">
-                      <i class="fas fa-play me-1"></i>Spill
+                      <i class="fas fa-play me-1"></i>Gå til
                     </a>
                   {% elif activity.id == 5 %}
                     <a href="{% url 'dice_tournament' pk=event.pk %}" class="btn btn-success btn-sm">
-                      <i class="fas fa-play me-1"></i>Spill
+                      <i class="fas fa-play me-1"></i>Gå til
                     </a>
                   {% elif activity.id == 4 %}
                     <a href="{% url 'running_page' pk=event.pk %}" class="btn btn-success btn-sm">
-                      <i class="fas fa-play me-1"></i>Spill
+                      <i class="fas fa-play me-1"></i>Gå til
                     </a>
                   {% else %}
                     <form method="post" action="{% url 'score_activity' pk=event.pk activity_id=activity.id %}" style="display: inline;">

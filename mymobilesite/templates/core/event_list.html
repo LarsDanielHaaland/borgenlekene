@@ -3,11 +3,43 @@
 {% block title %}Arrangementer{% endblock %}
 
 {% block content %}
+  <section style="margin-bottom: 3rem; padding: 2rem; background: linear-gradient(135deg, #eef2ff 0%, #fdf2f8 100%); border: 1px solid #e0e7ff; border-radius: 0.75rem;">
+    <div style="max-width: 820px; margin: 0 auto; text-align: center;">
+      <h2 style="margin-bottom: 1rem; border: none; padding: 0;">Hva er Borgenlekene?</h2>
+      <p style="margin-bottom: 1rem; font-size: 1.05rem; color: #374151;">
+        Borgenlekene startet med en enkel idé: Samle gjengen til en hel dag med forskjellige aktiviteter og konkurranse.
+      </p>
+      <div style="margin-bottom: 1.5rem; color: #4b5563; text-align: left;">
+        <p style="margin-bottom: 0.5rem;">Følgende aktiviteter er med:</p>
+        <ol style="margin-bottom: 0;">
+          <li>Tennis</li>
+          <li>Løping</li>
+          <li>Fotball</li>
+          <li>Basketball</li>
+          <li>Terningspill</li>
+        </ol>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; text-align: left;">
+        <div style="padding: 1rem; background: rgba(255, 255, 255, 0.75); border-radius: 0.5rem;">
+          <strong><i class="fas fa-calendar-plus me-2" style="color: #6366f1;"></i>1. Opprett dagen</strong>
+          <p class="text-muted" style="margin: 0.5rem 0 0; font-size: 0.9rem;">Velg navn, dato og starttid for arrangementet.</p>
+        </div>
+        <div style="padding: 1rem; background: rgba(255, 255, 255, 0.75); border-radius: 0.5rem;">
+          <strong><i class="fas fa-users me-2" style="color: #ec4899;"></i>2. Samle gjengen</strong>
+          <p class="text-muted" style="margin: 0.5rem 0 0; font-size: 0.9rem;">Legg til deltakere og inviter venner til å bli med.</p>
+        </div>
+        <div style="padding: 1rem; background: rgba(255, 255, 255, 0.75); border-radius: 0.5rem;">
+          <strong><i class="fas fa-trophy me-2" style="color: #f59e0b;"></i>3. Registrer resultater</strong>
+          <p class="text-muted" style="margin: 0.5rem 0 0; font-size: 0.9rem;">Stein, saks, papir for tiebreaks</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div style="text-align: center; margin-bottom: 3rem;">
     <h2 style="border-bottom: 3px solid #6366f1; padding-bottom: 1rem;">
       <i class="fas fa-calendar-alt me-3" style="color: #6366f1;"></i>Alle Arrangementer
     </h2>
-    <p class="text-muted" style="font-size: 1.1rem;">Delta i konkurranser og følg poengene dine på tvers av fem episke spill</p>
   </div>
 
   {% if featured_events %}

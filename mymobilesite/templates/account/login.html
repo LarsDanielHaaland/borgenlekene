@@ -9,9 +9,11 @@
         <h1 class="mb-3"><i class="fas fa-sign-in-alt me-2"></i>Logg inn</h1>
 
         {% if messages %}
-          {% for message in messages %}
-            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-          {% endfor %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} mb-3">
+                {{ message }}
+                </div>
+            {% endfor %}
         {% endif %}
 
         <form method="post" action="{% url 'account_login' %}">

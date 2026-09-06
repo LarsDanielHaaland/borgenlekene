@@ -7,6 +7,7 @@ to reflect the package rename.
 
 from pathlib import Path
 import os
+import sys
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -90,8 +91,11 @@ WSGI_APPLICATION = "project.wsgi.application"
 
 # Database
 # Uses Supabase PostgreSQL when DATABASE_URL is set; otherwise local SQLite.
+# `manage.py test` always uses local SQLite so the suite stays fast and never
+# fights the Supabase connection pooler over test-database creation/teardown.
+RUNNING_TESTS = 'test' in sys.argv
 DATABASE_URL = os.getenv('DATABASE_URL')
-if DATABASE_URL:
+if DATABASE_URL and not RUNNING_TESTS:
     import dj_database_url
 
     DATABASES = {

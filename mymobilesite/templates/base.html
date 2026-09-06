@@ -13,12 +13,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <header class="d-flex justify-content-between align-items-center mb-4">
-        <h1><a href="{% url 'event_list' %}">🏆 Borgenlekene</a></h1>
-        <nav class="auth-section">
-            <button id="dark-mode-toggle" class="btn btn-outline-light" type="button" aria-label="Toggle dark mode" aria-pressed="false">
+    <header class="mb-4">
+        <div class="container d-flex justify-content-between align-items-center">
+            <h1><a href="{% url 'event_list' %}">🏆 Borgenlekene <em class="beta-label">beta</em></a></h1>
+            <nav class="auth-section">
+            <!-- <button id="dark-mode-toggle" class="btn btn-outline-light" type="button" aria-label="Toggle dark mode" aria-pressed="false">
                 <i class="fas fa-moon me-2"></i>Dark mode
-            </button>
+            </button> -->
             <a href="{% url 'event_create' %}" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>Nytt Arrangement
             </a>
@@ -33,10 +34,10 @@
                     <i class="fas fa-sign-out-alt me-1"></i>Logg ut
                 </a>
             {% else %}
-                <a href="{% url 'account_login' %}" class="btn btn-outline-primary">
+                <a href="{% url 'account_login' %}" class="btn btn-primary">
                     <i class="fas fa-sign-in-alt me-1"></i>Logg inn
                 </a>
-                <a href="{% url 'account_signup' %}" class="btn btn-outline-primary">
+                <a href="{% url 'account_signup' %}" class="btn btn-primary">
                     <i class="fas fa-user-plus me-1"></i>Registrer deg
                 </a>
                 {# Use django-allauth's provider_login_url if allauth is installed #}
@@ -52,7 +53,8 @@
                     {% endif %}
                 {% endif %}
             {% endif %}
-        </nav>
+            </nav>
+        </div>
     </header>
 
     <div class="container">
@@ -73,8 +75,7 @@
     </div>
 
     <footer>
-        <p>&copy; 2024 <strong>Borgenlekene</strong> - Konkurrér, Vinnen, Feir</p>
-        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Fem konkurranser • Ubegrenset moro</p>
+        <p>&copy; 2026 <strong>Borgenlekene</strong></p>
     </footer>
 
     <!-- Bootstrap JS for responsive components -->

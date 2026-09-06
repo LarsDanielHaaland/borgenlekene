@@ -5,10 +5,32 @@
 <div class="container">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-      <h1 class="mb-0">Terningspill — {{ event.name }}</h1>
-      <p class="text-muted mb-0">Enkelt sluttresultat. Plass 1 får spesielle bonuspoeng.</p>
+      <h1 class="mb-0">Terningspill — {{ event.name }}
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle ms-2" style="width: 28px; height: 28px; padding: 0; line-height: 1;" data-bs-toggle="modal" data-bs-target="#rulesModal" title="Hvordan spillet fungerer">
+          <i class="fas fa-info"></i>
+        </button>
+      </h1>
+      <p class="text-muted mb-0">Enkelt sluttresultat.</p>
     </div>
     <a href="{% url 'event_detail' pk=event.pk %}" class="btn btn-secondary">← Tilbake til Arrangement</a>
+  </div>
+
+  <div class="modal fade" id="rulesModal" tabindex="-1" aria-labelledby="rulesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="rulesModalLabel"><i class="fas fa-dice me-2"></i>Slik fungerer Terningspillet</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-0">Basert på <strong>Liar's Dice / Perudo</strong>. Alle ruller terninger skjult under et beger.
+          På rundgang byr spillerne på hvor mange terninger med en gitt verdi som finnes totalt hos alle spillerne.
+          Neste spiller må enten by høyere (flere terninger eller høyere verdi) eller utfordre forrige bud ("tvil").
+          Var budet feil, mister budgiveren en terning — var det riktig eller bedre, mister utfordreren en terning.
+          Spillere ryker ut når de mister alle terningene sine, og den siste som står igjen vinner.</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <h3>Sluttresultat</h3>

@@ -6,10 +6,29 @@
 {% block content %}
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
-      <h2 class="mb-0">Løping</h2>
+      <h2 class="mb-0">Løping
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle ms-2" style="width: 28px; height: 28px; padding: 0; line-height: 1;" data-bs-toggle="modal" data-bs-target="#rulesModal" title="Hvordan spillet fungerer">
+          <i class="fas fa-info"></i>
+        </button>
+      </h2>
       <p class="text-muted">Arrangement: {{ event.name }}</p>
     </div>
     <a href="{% url 'event_detail' pk=event.pk %}" class="btn btn-secondary">← Tilbake til Arrangement</a>
+  </div>
+
+  <div class="modal fade" id="rulesModal" tabindex="-1" aria-labelledby="rulesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="rulesModalLabel"><i class="fas fa-running me-2"></i>Slik fungerer Løping</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-0">Finn en bakke og løp til toppen. Start klokken når deltakeren begynner å løpe, og stopp den når de når toppen.
+          Den som bruker kortest tid opp bakken vinner. Du kan bruke individuell start (én og én) eller gruppestart (flere samtidig).</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="d-flex align-items-center flex-nowrap mb-3" style="gap: 0.75rem;">
@@ -119,7 +138,7 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <p>Er du sikker på at du vil tilbakestille denne deltakeres tid?</p>
+          <p id="reset-confirm-message">Er du sikker på at du vil tilbakestille denne deltakeres tid?</p>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Avbryt</button>

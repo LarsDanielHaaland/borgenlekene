@@ -3,7 +3,7 @@
    ============================================ */
 
 :root {
-    --primary-color: #6366f1;
+    --primary-color: #0b0d6b;
     --primary-dark: #4f46e5;
     --secondary-color: #ec4899;
     --success-color: #10b981;
@@ -11,9 +11,9 @@
     --danger-color: #ef4444;
     --info-color: #0ea5e9;
     --light-bg: #f9fafb;
-    --bg-color: #f9fafb;
-    --surface-color: #ffffff;
-    --surface-alt: #f3f4f6;
+    --bg-color: #cfcff9;
+    --surface-color: #646a69;
+    --surface-alt: #afbac4;
     --text-color: #374151;
     --muted-text: #6b7280;
     --border-color: #e5e7eb;
@@ -66,6 +66,7 @@ header {
 }
 
 header h1 {
+    color: white;
     font-size: 2rem;
     font-weight: 700;
     letter-spacing: -0.5px;
@@ -80,6 +81,15 @@ header h1 a {
 
 header h1 a:hover {
     opacity: 0.9;
+}
+
+header h1 .beta-label {
+    display: inline-block;
+    margin-left: 0.15em;
+    font-size: 0.45em;
+    font-weight: 600;
+    transform: translateY(0.1em) rotate(-15deg);
+    transform-origin: bottom left;
 }
 
 header .d-flex {
@@ -270,6 +280,28 @@ header .d-flex {
     color: var(--text-color);
 }
 
+.signup-form .mb-3 {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.5fr);
+    column-gap: 1rem;
+    align-items: center;
+}
+
+.signup-form .form-label {
+    display: block;
+    margin-bottom: 0;
+}
+
+.signup-form input:not([type="hidden"]) {
+    display: block;
+    width: 100%;
+}
+
+.signup-form .mb-3 small,
+.signup-form .mb-3 .alert {
+    grid-column: 2;
+}
+
 body.dark-mode .card,
 body.dark-mode .list-group-item,
 body.dark-mode .activity-section,
@@ -391,8 +423,16 @@ body.dark-mode footer {
 }
 
 .messages {
-    list-style: none;
-    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+.message-alert {
+    margin-bottom: 1rem;
+}
+
+.message-alert:last-child {
+    margin-bottom: 0;
 }
 
 /* ============================================

@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Modal elements
   const manualSetModalEl = document.getElementById('manualSetModal');
   const resetConfirmModalEl = document.getElementById('resetConfirmModal');
+  const resetConfirmLabel = document.getElementById('resetConfirmLabel');
+  const resetConfirmMessage = document.getElementById('reset-confirm-message');
   const manualSetMinutes = document.getElementById('manual-set-minutes');
   const manualSetSeconds = document.getElementById('manual-set-seconds');
   const manualSetError = document.getElementById('manual-set-error');
@@ -15,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetConfirmBtn = document.getElementById('reset-confirm-btn');
   let manualTargetId = null;
   let resetTargetId = null;
+  let restartTargetId = null;
 
   let mode = 'individual';
   let timers = {}; // nickname_id -> start timestamp
@@ -111,44 +114,59 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   }
 
+  function hasRecordedTime(id) {
+    if (recorded[id] !== undefined) return true;
+    const timeSpan = participantList.querySelector(`.time-display[data-nickname-id="${id}"]`);
+    return Boolean(timeSpan && timeSpan.textContent.trim() !== '-');
+  }
+
+  function startTimer(id, startBtn) {
+    if (mode === 'individual') {
+      timers[id] = Date.now();
+      const live = participantList.querySelector(`.live-clock[data-nickname-id="${id}"]`);
+      if (live) { live.style.display = 'inline-block'; live.textContent = formatMMSS(0); }
+
+      startBtn.disabled = true;
+      startBtn.classList.remove('btn-outline-success');
+      startBtn.classList.add('btn-success');
+      const siblingStop = startBtn.closest('div').querySelector('.individual-stop');
+      if (siblingStop) siblingStop.disabled = false;
+    } else {
+      const now = Date.now();
+      participantList.querySelectorAll('.group-start').forEach(b => {
+        const nicknameId = parseInt(b.dataset.nicknameId, 10);
+        if (!timers[nicknameId]) {
+          timers[nicknameId] = now;
+          b.disabled = true;
+          b.classList.remove('btn-outline-primary');
+          b.classList.add('btn-primary');
+          const stop = b.closest('div').querySelector('.group-stop');
+          if (stop) stop.disabled = false;
+          const live = participantList.querySelector(`.live-clock[data-nickname-id="${nicknameId}"]`);
+          if (live) { live.style.display = 'inline-block'; live.textContent = formatMMSS(0); }
+        }
+      });
+    }
+    statusEl.textContent = 'Timing started.';
+    startClockInterval();
+  }
+
   // Start/stop handlers
   participantList.addEventListener('click', (e) => {
     const startBtn = e.target.closest('.start-btn');
     const stopBtn = e.target.closest('.stop-btn');
     if (startBtn) {
       const id = parseInt(startBtn.dataset.nicknameId, 10);
-      // no undo prompt; starting will simply begin a new timing session
-
-      // start timer for individual or group
-      if (mode === 'individual') {
-        timers[id] = Date.now();
-        // show live clock
-        const live = participantList.querySelector(`.live-clock[data-nickname-id="${id}"]`);
-  if (live) { live.style.display = 'inline-block'; live.textContent = formatMMSS(0); }
-
-        startBtn.disabled = true;
-        startBtn.classList.remove('btn-outline-success');
-        startBtn.classList.add('btn-success');
-        const siblingStop = startBtn.closest('div').querySelector('.individual-stop');
-        if (siblingStop) siblingStop.disabled = false;
-      } else {
-        // group mode: start all that don't have timers
-        const now = Date.now();
-        participantList.querySelectorAll('.group-start').forEach(b => {
-          const nid = parseInt(b.dataset.nicknameId, 10);
-          if (!timers[nid]) {
-            timers[nid] = now;
-            b.disabled = true;
-            b.classList.remove('btn-outline-primary');
-            b.classList.add('btn-primary');
-            const stop = b.closest('div').querySelector('.group-stop');
-            if (stop) stop.disabled = false;
-            const live = participantList.querySelector(`.live-clock[data-nickname-id="${nid}"]`);
-            if (live) { live.style.display = 'inline-block'; live.textContent = formatMMSS(0); }
-          }
-        });
+      if (hasRecordedTime(id)) {
+        restartTargetId = id;
+        resetConfirmLabel.textContent = 'Bekreft ny start';
+        resetConfirmMessage.textContent = 'Denne deltakeren har allerede fått en tid. Vil du starte tidtakeren på nytt?';
+        resetConfirmBtn.textContent = 'Start på nytt';
+        const resetModal = new bootstrap.Modal(resetConfirmModalEl);
+        resetModal.show();
+        return;
       }
-      statusEl.textContent = 'Timing started.';
+      startTimer(id, startBtn);
     }
     if (stopBtn) {
       const id = parseInt(stopBtn.dataset.nicknameId, 10);
@@ -181,6 +199,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (resetBtn) {
       // open reset confirmation modal
       resetTargetId = parseInt(resetBtn.dataset.nicknameId, 10);
+      restartTargetId = null;
+      resetConfirmLabel.textContent = 'Bekreft tilbakestilling';
+      resetConfirmMessage.textContent = 'Er du sikker på at du vil tilbakestille denne deltakeres tid?';
+      resetConfirmBtn.textContent = 'Tilbakestill';
       const resetModal = new bootstrap.Modal(resetConfirmModalEl);
       resetModal.show();
     }
@@ -224,6 +246,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Reset confirm handler
   resetConfirmBtn.addEventListener('click', async () => {
+    if (restartTargetId !== null) {
+      const id = restartTargetId;
+      const startBtn = participantList.querySelector(`.start-btn[data-nickname-id="${id}"]`);
+      if (startBtn) startTimer(id, startBtn);
+      const resetModal = bootstrap.Modal.getInstance(resetConfirmModalEl);
+      if (resetModal) resetModal.hide();
+      restartTargetId = null;
+      return;
+    }
     if (resetTargetId === null) return;
     const id = resetTargetId;
     try {

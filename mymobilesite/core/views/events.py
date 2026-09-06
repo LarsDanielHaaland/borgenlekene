@@ -228,12 +228,17 @@ def event_detail(request, pk):
 
     # Get existing rankings for each activity
     activity_rankings = {}
+    rankings_by_nickname = {}
     for activity in ACTIVITIES:
         rankings = ActivityRanking.objects.filter(
             event=event,
             activity_id=activity['id']
         ).select_related('nickname').order_by('rank')
+        rankings = list(rankings)
         activity_rankings[activity['id']] = rankings
+        rankings_by_nickname[activity['id']] = {
+            ranking.nickname_id: ranking for ranking in rankings
+        }
 
     # Build a per-nickname breakdown of points per activity so the template
     # can show where each participant got their points. Points calculation
@@ -243,9 +248,7 @@ def event_detail(request, pk):
     for nickname in nicknames:
         per_activity = {}
         for activity in ACTIVITIES:
-            rankings_qs = activity_rankings.get(activity['id'])
-            # Try to find this nickname in the rankings for the activity
-            rank_obj = rankings_qs.filter(nickname=nickname).first() if rankings_qs is not None else None
+            rank_obj = rankings_by_nickname.get(activity['id'], {}).get(nickname.id)
             if rank_obj:
                 points = total_participants - rank_obj.rank + 1
             else:
@@ -258,8 +261,8 @@ def event_detail(request, pk):
     if total_participants > 0:
         all_games_scored = True
         for activity in ACTIVITIES:
-            rankings_qs = activity_rankings.get(activity['id'], [])
-            if len(list(rankings_qs)) != total_participants:
+            rankings = activity_rankings.get(activity['id'], [])
+            if len(rankings) != total_participants:
                 all_games_scored = False
                 break
 

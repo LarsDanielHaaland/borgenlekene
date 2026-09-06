@@ -10,11 +10,11 @@ from ..models import Event, Nickname, ActivityRanking, TennisMatch, RunningResul
 
 # --- Scoring Logic ---
 ACTIVITIES = [
-    {'id': 1, 'name': 'Tennis', 'description': 'Tennis tournament rankings'},
-    {'id': 4, 'name': 'Running', 'description': 'Running race times'},
-    {'id': 2, 'name': 'Football', 'description': 'Football match performance'},
-    {'id': 3, 'name': 'Basketball', 'description': 'Basketball game results'},
-    {'id': 5, 'name': 'Dice Game', 'description': 'Dice rolling competition'},
+    {'id': 1, 'name': 'Tennis', 'description': 'Alle møter alle i en sveitsisk-inspirert turnering.'},
+    {'id': 4, 'name': 'Running', 'description': 'Finn en bakke og løp til toppen. Raskest tid vinner.'},
+    {'id': 2, 'name': 'Football', 'description': 'Straffesparkkonkurranse med utslagsrunder.'},
+    {'id': 3, 'name': 'Basketball', 'description': 'Ligaspill over flere runder, poengene summeres.'},
+    {'id': 5, 'name': 'Dice Game', 'description': "Terningspill basert på Liar's Dice / Perudo."},
 ]
 
 def update_total_scores(event):

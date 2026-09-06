@@ -14,14 +14,21 @@
           {% endfor %}
         {% endif %}
 
-        <form method="post" action="{% url 'account_signup' %}">
+        <form class="signup-form" method="post" action="{% url 'account_signup' %}">
           {% csrf_token %}
           {% for field in form %}
             <div class="mb-3">
               <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
               {{ field }}
               {% if field.help_text %}
-                <small class="text-muted d-block">{{ field.help_text }}</small>
+                {% if field.name == 'password1' %}
+                  <small class="text-muted d-block password-help">
+                    <i class="fas fa-info-circle" title="Passordet kan ikke ligne for mye på personopplysningene dine, være vanlig eller bare inneholde tall." aria-label="Informasjon om passordstyrke"></i>
+                    <span>Passordet må inneholde minst 8 tegn.</span>
+                  </small>
+                {% else %}
+                  <small class="text-muted d-block">{{ field.help_text }}</small>
+                {% endif %}
               {% endif %}
               {% if field.errors %}
                 <div class="alert alert-danger" style="margin-top: 0.5rem;">{{ field.errors|join:", " }}</div>

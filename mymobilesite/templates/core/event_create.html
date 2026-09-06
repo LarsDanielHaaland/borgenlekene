@@ -7,7 +7,6 @@
     <h2 style="border-bottom: 3px solid #6366f1; padding-bottom: 1rem;">
       <i class="fas fa-plus-circle me-3" style="color: #6366f1;"></i>Opprett Nytt Arrangement
     </h2>
-    <p class="text-muted" style="font-size: 1.1rem; margin-top: 0.5rem;">Start en ny konkurranse og inviter dine venner</p>
   </div>
   
   <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start;">
@@ -55,24 +54,24 @@
 
         <div class="row g-3 mb-4">
           <div class="col-md-6">
-            <label for="{{ form.start_date.id_for_label }}" class="form-label">
-              <i class="fas fa-hourglass-start me-2" style="color: #6366f1;"></i>Startdato
+            <label for="{{ form.event_date.id_for_label }}" class="form-label">
+              <i class="fas fa-calendar-day me-2" style="color: #6366f1;"></i>Dato
             </label>
-            {{ form.start_date }}
-            {% if form.start_date.errors %}
+            {{ form.event_date }}
+            {% if form.event_date.errors %}
               <div class="alert alert-danger mt-2 mb-0">
-                <i class="fas fa-exclamation-circle me-2"></i>{{ form.start_date.errors|join:", " }}
+                <i class="fas fa-exclamation-circle me-2"></i>{{ form.event_date.errors|join:", " }}
               </div>
             {% endif %}
           </div>
           <div class="col-md-6">
-            <label for="{{ form.end_date.id_for_label }}" class="form-label">
-              <i class="fas fa-hourglass-end me-2" style="color: #6366f1;"></i>Sluttdato
+            <label for="{{ form.event_time.id_for_label }}" class="form-label">
+              <i class="fas fa-clock me-2" style="color: #6366f1;"></i>Starttid
             </label>
-            {{ form.end_date }}
-            {% if form.end_date.errors %}
+            {{ form.event_time }}
+            {% if form.event_time.errors %}
               <div class="alert alert-danger mt-2 mb-0">
-                <i class="fas fa-exclamation-circle me-2"></i>{{ form.end_date.errors|join:", " }}
+                <i class="fas fa-exclamation-circle me-2"></i>{{ form.event_time.errors|join:", " }}
               </div>
             {% endif %}
           </div>
@@ -105,19 +104,69 @@
           </li>
           <li>
             <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border-radius: 50%; margin-right: 0.75rem; font-weight: 700; font-size: 0.9rem;">3</span>
-            Konkurrér i spill
-          </li>
-          <li>
-            <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; border-radius: 50%; margin-right: 0.75rem; font-weight: 700; font-size: 0.9rem;">4</span>
-            Klatre på rankinglisten!
+            Samle hele vennegjengen en hel dag
           </li>
         </ul>
         <hr>
-        <p class="text-muted" style="margin-bottom: 0; font-size: 0.9rem;">
+        <p class="text-muted mb-2" style="font-size: 0.9rem;">
           <i class="fas fa-info-circle me-2" style="color: #6366f1;"></i>
-          <strong>5 Spill Tilgjengelig:</strong><br>
-          🎾 Tennis • ⚽ Fotball • 🏀 Basketball • 🏃 Løping • 🎲 Terning
+          <strong>Full Utstyrsliste:</strong>
         </p>
+        <ul class="list-unstyled text-muted mb-0" style="font-size: 0.9rem;">
+          <li class="d-flex justify-content-between gap-3"><span>🎾 Tennis</span><span class="text-end">2 tennisrackets, 5+ baller</span></li>
+          <li class="d-flex justify-content-between gap-3"><span>⚽ Fotball</span><span class="text-end">1 fotball</span></li>
+          <li class="d-flex justify-content-between gap-3"><span>🏀 Basketball</span><span class="text-end">2 basketballer</span></li>
+          <li class="d-flex justify-content-between gap-3"><span>🏃 Løping</span><span class="text-end">joggesko</span></li>
+          <li class="d-flex justify-content-between gap-3"><span>🎲 Terning</span><span class="text-end">6 terninger per spiller</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mt-4" style="border: 2px solid #e0e7ff;">
+    <div class="card-body">
+      <h5 class="card-title" style="color: #6366f1;">
+        <i class="fas fa-book me-2"></i>Regler
+      </h5>
+      <h5>
+        <p>Stein, saks, papir om rekkefølgen på alle spill og avgjøring av tiebreaks</p>
+      </h5>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; margin-top: 1rem;">
+        <div>
+          <h6 style="margin-bottom: 0.4rem;">🎾 Tennis</h6>
+          <p class="text-muted mb-0" style="font-size: 0.9rem;">
+            Turnering der alle spiller mot alle. Hver kamp har en vinner,
+            og plasseringen avgjøres av antall seiere totalt.
+          </p>
+        </div>
+        <div>
+          <h6 style="margin-bottom: 0.4rem;">🏃 Løping</h6>
+          <p class="text-muted mb-0" style="font-size: 0.9rem;">
+            Finn en bakke og løp til toppen. Den som bruker kortest tid opp bakken vinner.
+          </p>
+        </div>
+        <div>
+          <h6 style="margin-bottom: 0.4rem;">⚽ Fotball</h6>
+          <p class="text-muted mb-0" style="font-size: 0.9rem;">
+            Straffekonk: alle spillere i en rekke og rullerer.
+          </p>
+        </div>
+        <div>
+          <h6 style="margin-bottom: 0.4rem;">🏀 Basketball</h6>
+          <p class="text-muted mb-0" style="font-size: 0.9rem;">
+            Lightning over flere runder, hvor poengene summeres for å avgjøre vinneren.
+          </p>
+        </div>
+        <div>
+          <h6 style="margin-bottom: 0.4rem;">🎲 Terningspillet</h6>
+          <p class="text-muted mb-0" style="font-size: 0.9rem;">
+            Basert på <strong>Liar's Dice / Perudo</strong>. Alle ruller terninger skjult under et beger.
+            På rundgang byr spillerne på hvor mange terninger med en gitt verdi som finnes totalt hos alle spillerne.
+            Neste spiller må enten by høyere (flere terninger eller høyere verdi) eller utfordre forrige bud ("tvil").
+            Var budet feil, mister budgiveren en terning — var det riktig eller bedre, mister utfordreren en terning.
+            Spillere ryker ut når de mister alle terningene sine, og den siste som står igjen vinner.
+          </p>
+        </div>
       </div>
     </div>
   </div>

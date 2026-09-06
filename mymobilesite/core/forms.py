@@ -1,7 +1,12 @@
+from datetime import datetime, time as dt_time
+
 from django import forms
+from django.utils import timezone
 from allauth.account.forms import SignupForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
 from .models import Event, Nickname, Profile
+
+DEFAULT_EVENT_TIME = dt_time(10, 0)
 
 
 class DisplayNameMixin(forms.Form):
@@ -44,14 +49,23 @@ class EventForm(forms.ModelForm):
         initial='future',
         widget=forms.Select(attrs={'class': 'form-select'})
     )
+    event_date = forms.DateField(
+        required=False,
+        label='Dato',
+        widget=forms.DateInput(attrs={'type': 'date'}),
+    )
+    event_time = forms.TimeField(
+        required=False,
+        label='Starttid',
+        initial=DEFAULT_EVENT_TIME,
+        widget=forms.TimeInput(attrs={'type': 'time'}),
+    )
 
     class Meta:
         model = Event
-        fields = ['name', 'description', 'status', 'start_date', 'end_date']
+        fields = ['name', 'description', 'status']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 3}),
-            'start_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-            'end_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -59,9 +73,29 @@ class EventForm(forms.ModelForm):
         self.fields['status'].required = False
         if not self.data.get('status') and not self.initial.get('status'):
             self.fields['status'].initial = 'future'
+        if self.instance and self.instance.pk and self.instance.start_date:
+            local_start = timezone.localtime(self.instance.start_date)
+            self.fields['event_date'].initial = local_start.date()
+            self.fields['event_time'].initial = local_start.time()
 
     def clean_status(self):
         return self.cleaned_data.get('status') or 'future'
+
+    def save(self, commit=True):
+        event = super().save(commit=False)
+        event_date = self.cleaned_data.get('event_date')
+        event_time = self.cleaned_data.get('event_time') or DEFAULT_EVENT_TIME
+        if event_date:
+            naive_start = datetime.combine(event_date, event_time)
+            naive_end = datetime.combine(event_date, dt_time(23, 59, 59))
+            event.start_date = timezone.make_aware(naive_start) if timezone.is_naive(naive_start) else naive_start
+            event.end_date = timezone.make_aware(naive_end) if timezone.is_naive(naive_end) else naive_end
+        else:
+            event.start_date = None
+            event.end_date = None
+        if commit:
+            event.save()
+        return event
 
 class NicknameForm(forms.ModelForm):
     """Form for adding a Nickname to an Event."""

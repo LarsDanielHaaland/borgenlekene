@@ -7,6 +7,9 @@
     <div>
       <h2 style="border-bottom: 3px solid #ef4444; padding-bottom: 1rem; margin: 0;">
         <i class="fas fa-futbol" style="color: #ef4444; margin-right: 0.75rem;"></i>Fotball Turnering
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle ms-2" style="width: 28px; height: 28px; padding: 0; line-height: 1;" data-bs-toggle="modal" data-bs-target="#rulesModal" title="Hvordan spillet fungerer">
+          <i class="fas fa-info"></i>
+        </button>
       </h2>
       <p class="text-muted" style="margin-top: 0.5rem;">
         <i class="fas fa-info-circle me-2"></i>3 runder med eliminering - en spiller eliminert per runde
@@ -18,6 +21,21 @@
     <a href="{% url 'event_detail' pk=event.pk %}" class="btn btn-secondary">
       <i class="fas fa-arrow-left me-2"></i>Tilbake
     </a>
+  </div>
+
+  <div class="modal fade" id="rulesModal" tabindex="-1" aria-labelledby="rulesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="rulesModalLabel"><i class="fas fa-futbol me-2" style="color: #ef4444;"></i>Slik fungerer Fotball</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <p class="mb-0">Straffesparkkonkurranse med utslagsrunder. Taperen av hver duell er ute,
+          og det spilles til det står én vinner igjen. Poengene fra hver runde legges sammen til et sluttresultat.</p>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div class="container">
