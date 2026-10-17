@@ -162,6 +162,51 @@ def generate_balanced_round_robin(nicknames):
 
     return rounds
 
+
+def _build_tournament_scoreboards(participants, accent, accent_dark):
+    round_scoreboards = []
+    round_columns = [{'key': 'score', 'label': 'Poeng', 'cell_class': 'round-score-cell', 'emphasize': True}]
+    for round_number in range(1, 4):
+        round_scoreboards.append({
+            'table_id': f'round{round_number}-table',
+            'table_class': 'table-hover table-sm',
+            'header_variant': 'light',
+            'move_policy': 'free',
+            'accent': accent,
+            'accent_dark': accent_dark,
+            'round_number': round_number,
+            'columns': round_columns,
+            'rows': [
+                {
+                    'id': nickname.id,
+                    'name': nickname.name,
+                    'rank': index,
+                    'metrics': {'score': '-'},
+                }
+                for index, nickname in enumerate(participants, start=1)
+            ],
+        })
+
+    final_scoreboard = {
+        'table_id': 'final-standing',
+        'table_class': '',
+        'header_variant': 'accent',
+        'move_policy': 'ties',
+        'accent': accent,
+        'accent_dark': accent_dark,
+        'columns': [{'key': 'total', 'label': 'Total', 'cell_class': 'total-cell', 'emphasize': True}],
+        'rows': [
+            {
+                'id': nickname.id,
+                'name': nickname.name,
+                'rank': index,
+                'metrics': {'total': '-'},
+            }
+            for index, nickname in enumerate(participants, start=1)
+        ],
+    }
+    return round_scoreboards, final_scoreboard
+
 def tennis_tournament(request, pk):
     """
     Display tennis tournament pairings (round-robin), standings,
@@ -198,10 +243,36 @@ def tennis_tournament(request, pk):
     played_matches_count = len(existing_matches)
     is_concluded = total_possible_matches > 0 and played_matches_count == total_possible_matches
 
+    standings = calculate_tennis_standings(event)
     context = {
         'event': event,
         'matches': matches_to_play,
-        'standings': calculate_tennis_standings(event), # Your existing function
+        'standings': standings,
+        'scoreboard': {
+            'table_id': 'final-standing',
+            'table_class': '',
+            'header_variant': 'accent',
+            'move_policy': 'ties',
+            'accent': '#10b981',
+            'accent_dark': '#059669',
+            'columns': [
+                {'key': 'wins', 'label': 'Seire', 'cell_class': 'wins-cell', 'emphasize': True},
+                {'key': 'losses', 'label': 'Tap', 'cell_class': 'losses-cell'},
+            ],
+            'rows': [
+                {
+                    'id': standing['nickname'].id,
+                    'name': standing['nickname'].name,
+                    'rank': index,
+                    'tie_value': standing['wins'],
+                    'metrics': {
+                        'wins': standing['wins'],
+                        'losses': standing['losses'],
+                    },
+                }
+                for index, standing in enumerate(standings, start=1)
+            ],
+        },
         'activity': {'id': 1, 'name': 'Tennis'}, # Pass activity info
         'is_concluded': is_concluded,
         'total_participants': num_nicknames
@@ -223,9 +294,38 @@ def running_page(request, pk):
             'result': existing.get(n.id)
         })
 
+    result_rows = [participant for participant in participants if participant['result']]
+    total_results = len(result_rows)
+    scoreboard_rows = []
+    for rank, participant in enumerate(result_rows, start=1):
+        seconds = int(float(participant['result'].time_seconds))
+        scoreboard_rows.append({
+            'id': participant['nickname'].id,
+            'name': participant['nickname'].name,
+            'rank': rank,
+            'tie_value': seconds,
+            'metrics': {
+                'time': f'{seconds // 60}:{seconds % 60:02d}',
+                'points': total_results - rank + 1,
+            },
+        })
+
     context = {
         'event': event,
         'participants': participants,
+        'scoreboard': {
+            'table_id': 'running-standings',
+            'table_class': 'table-striped table-sm mb-0',
+            'header_variant': 'light',
+            'move_policy': 'ties',
+            'accent': '#0ea5e9',
+            'accent_dark': '#0284c7',
+            'columns': [
+                {'key': 'time', 'label': 'Tid'},
+                {'key': 'points', 'label': 'Poeng', 'emphasize': True},
+            ],
+            'rows': scoreboard_rows,
+        },
     }
     return render(request, 'core/running.html', context)
 
@@ -257,12 +357,17 @@ def football_tournament(request, pk):
     }
 
     final_ranking = load_ranking_for(None)
+    round_scoreboards, final_scoreboard = _build_tournament_scoreboards(
+        nicknames, '#ef4444', '#dc2626'
+    )
 
     context = {
         'event': event,
         'participants': nicknames,
         'round_rankings': round_rankings,
         'final_ranking': final_ranking,
+        'round_scoreboards': round_scoreboards,
+        'final_scoreboard': final_scoreboard,
         'activity': {'id': 2, 'name': 'Football'},
     }
     return render(request, 'core/football.html', context)
@@ -292,12 +397,17 @@ def basketball_tournament(request, pk):
     }
 
     final_ranking = load_ranking_for(None)
+    round_scoreboards, final_scoreboard = _build_tournament_scoreboards(
+        nicknames, '#f59e0b', '#d97706'
+    )
 
     context = {
         'event': event,
         'participants': nicknames,
         'round_rankings': round_rankings,
         'final_ranking': final_ranking,
+        'round_scoreboards': round_scoreboards,
+        'final_scoreboard': final_scoreboard,
         'activity': {'id': 3, 'name': 'Basketball'},
     }
     return render(request, 'core/basketball.html', context)
@@ -322,6 +432,24 @@ def dice_tournament(request, pk):
         'event': event,
         'participants': nicknames,
         'final_ranking': final_ranking,
+        'scoreboard': {
+            'table_id': 'final-standing',
+            'table_class': '',
+            'header_variant': 'accent',
+            'move_policy': 'free',
+            'accent': '#ec4899',
+            'accent_dark': '#db2777',
+            'columns': [],
+            'rows': [
+                {
+                    'id': nickname.id,
+                    'name': nickname.name,
+                    'rank': index,
+                    'metrics': {},
+                }
+                for index, nickname in enumerate(nicknames, start=1)
+            ],
+        },
         'activity': {'id': 5, 'name': 'Dice Game'},
     }
     return render(request, 'core/dice.html', context)

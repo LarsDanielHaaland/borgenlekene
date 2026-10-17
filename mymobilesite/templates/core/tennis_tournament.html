@@ -121,29 +121,8 @@
       </h3>
 
       {% if standings %}
-        <div class="table-responsive" style="margin-bottom: 1.5rem;">
-          <table class="table" id="final-standing" style="margin: 0;">
-            <thead style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
-              <tr>
-                <th>Plass</th>
-                <th>Spiller</th>
-                <th>Seire</th>
-                <th>Tap</th>
-                <th>Kontroller</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for standing in standings %}
-                <tr data-nickname-id="{{ standing.nickname.id }}" data-wins="{{ standing.wins }}" data-losses="{{ standing.losses }}" style="transition: all 0.3s ease;">
-                  <td class="rank-cell" style="font-weight: 700; font-size: 1.1rem;">{{ forloop.counter }}</td>
-                  <td style="font-weight: 600;">{{ standing.nickname.name }}</td>
-                  <td class="wins-cell" style="font-weight: 700; color: #10b981; font-size: 1.1rem;">{{ standing.wins }}</td>
-                  <td class="losses-cell" style="font-weight: 600; color: #6b7280;">{{ standing.losses }}</td>
-                  <td class="order-controls"></td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        <div style="margin-bottom: 1.5rem;">
+          {% include "core/partials/scoreboard.html" with scoreboard=scoreboard %}
         </div>
         <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 0.5rem; padding: 1rem;">
           <button id="save-tiebreaks-btn" class="btn btn-info btn-sm">
@@ -162,5 +141,6 @@
   
   {% comment %} This hidden form is a good way to ensure the CSRF token is always on the page for our JS to find. {% endcomment %}
   <form style="display:none;">{% csrf_token %}</form>
+  <script src="{% static 'js/tournament_base.js' %}"></script>
   <script src="{% static 'js/tennis_tournament.js' %}?v=20260814"></script>
 {% endblock %}

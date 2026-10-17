@@ -1,0 +1,27 @@
+{% load core_extras %}
+<div class="table-responsive scoreboard-wrapper">
+  <table id="{{ scoreboard.table_id }}" class="table scoreboard-table {{ scoreboard.table_class }}" data-scoreboard="true" data-move-policy="{{ scoreboard.move_policy }}" style="--scoreboard-accent: {{ scoreboard.accent }}; --scoreboard-accent-dark: {{ scoreboard.accent_dark }};">
+    <thead class="scoreboard-head-{{ scoreboard.header_variant }}">
+      <tr>
+        <th>Plass</th>
+        <th>{{ scoreboard.participant_label|default:"Spiller" }}</th>
+        {% for column in scoreboard.columns %}
+          <th>{{ column.label }}</th>
+        {% endfor %}
+        <th>Kontroller</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in scoreboard.rows %}
+        <tr data-nickname-id="{{ row.id }}" data-tie-value="{{ row.tie_value|default_if_none:'' }}">
+          <td class="rank-cell">{{ row.rank|default:forloop.counter }}</td>
+          <td class="scoreboard-player">{{ row.name }}</td>
+          {% for column in scoreboard.columns %}
+            <td class="{{ column.cell_class }}{% if column.emphasize %} scoreboard-emphasis{% endif %}">{{ row.metrics|get_item:column.key|default:"-" }}</td>
+          {% endfor %}
+          <td class="order-controls"></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

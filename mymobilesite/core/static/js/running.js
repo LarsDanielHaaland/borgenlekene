@@ -5,6 +5,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusEl = document.getElementById('running-status');
   const participantList = document.getElementById('participants-list');
   const standingsBody = document.getElementById('running-standings');
+  const standingsTable = standingsBody.closest('table');
+  const standingsColumns = [
+    { key: 'time', cellClass: 'time-cell' },
+    { key: 'points', cellClass: 'points-cell', emphasize: true }
+  ];
   // Modal elements
   const manualSetModalEl = document.getElementById('manualSetModal');
   const resetConfirmModalEl = document.getElementById('resetConfirmModal');
@@ -69,20 +74,24 @@ document.addEventListener('DOMContentLoaded', () => {
     // Sort ascending (best time first)
     rows.sort((a,b) => a.time - b.time);
 
-    // Render Name, Time, Poeng (points mirror update_total_scores: total - rank + 1) and controls column
-    standingsBody.innerHTML = '';
     const total = rows.length;
-    rows.forEach((r, idx) => {
-      const points = total - idx; // idx is 0-based rank
-      const tr = document.createElement('tr');
-      tr.setAttribute('data-nickname-id', r.id);
-      tr.setAttribute('data-time', r.time);
-      tr.innerHTML = `<td>${r.name}</td><td>${formatMMSS(r.time)}</td><td class="fw-bold">${points}</td><td class="order-controls"></td>`;
-      standingsBody.appendChild(tr);
+    const scoreboardRows = rows.map((row, idx) => ({
+      id: row.id,
+      name: row.name,
+      rank: idx + 1,
+      tieValue: row.time,
+      metrics: {
+        time: formatMMSS(row.time),
+        points: total - idx
+      }
+    }));
+    Scoreboard.renderRows(standingsTable, scoreboardRows, standingsColumns);
+    Scoreboard.attachMoveControls(standingsTable, {
+      movement: 'ties',
+      onMove: () => {
+        manualOrder = Scoreboard.getOrder(standingsTable);
+      }
     });
-
-      // Add move up/down controls for tied adjacent rows
-      attachRunningMoveControls();
   }
 
   // Toggle modes and show/hide group vs individual buttons
@@ -310,67 +319,6 @@ document.addEventListener('DOMContentLoaded', () => {
   ['click'].forEach(evt => participantList.addEventListener(evt, startClockInterval));
   // stop interval check after stop actions (also on save reload)
   participantList.addEventListener('click', stopClockIntervalIfIdle);
-
-  // Handle move up/down clicks in the standings
-  standingsBody.addEventListener('click', (e) => {
-    const up = e.target.closest('.move-up');
-    const down = e.target.closest('.move-down');
-    if (!up && !down) return;
-    const tr = e.target.closest('tr');
-    if (!tr) return;
-    const time = parseInt(tr.getAttribute('data-time'), 10);
-    if (up) {
-      const prev = tr.previousElementSibling;
-      if (prev) {
-        const prevTime = parseInt(prev.getAttribute('data-time'), 10);
-        if (prevTime === time) {
-          prev.parentNode.insertBefore(tr, prev);
-        }
-      }
-    }
-    if (down) {
-      const next = tr.nextElementSibling;
-      if (next) {
-        const nextTime = parseInt(next.getAttribute('data-time'), 10);
-        if (nextTime === time) {
-          next.parentNode.insertBefore(next, tr);
-        }
-      }
-    }
-    // recompute manual order from DOM and reattach controls
-    manualOrder = Array.from(standingsBody.querySelectorAll('tr')).map(r => parseInt(r.getAttribute('data-nickname-id'), 10));
-    attachRunningMoveControls();
-  });
-
-  function attachRunningMoveControls() {
-    const trs = Array.from(standingsBody.querySelectorAll('tr'));
-    trs.forEach((tr, i) => {
-      const time = parseInt(tr.getAttribute('data-time'), 10);
-      const controls = tr.querySelector('.order-controls');
-      if (!controls) return;
-      controls.innerHTML = '';
-      if (i > 0) {
-        const prev = trs[i-1];
-        const prevTime = parseInt(prev.getAttribute('data-time'), 10);
-        if (prevTime === time) {
-          const up = document.createElement('button');
-          up.className = 'btn btn-sm btn-light move-up me-1';
-          up.textContent = '▲';
-          controls.appendChild(up);
-        }
-      }
-      if (i < trs.length - 1) {
-        const next = trs[i+1];
-        const nextTime = parseInt(next.getAttribute('data-time'), 10);
-        if (nextTime === time) {
-          const down = document.createElement('button');
-          down.className = 'btn btn-sm btn-light move-down';
-          down.textContent = '▼';
-          controls.appendChild(down);
-        }
-      }
-    });
-  }
 
   // Save results: send recorded times to the API for persistence
   saveBtn.addEventListener('click', async () => {

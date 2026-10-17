@@ -45,21 +45,8 @@
         <h4 style="border: none; color: #1f2937; margin-bottom: 1.5rem;">
           <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border-radius: 50%; margin-right: 0.75rem; font-weight: 700;">1</span>Runde 1
         </h4>
-        <div class="table-responsive" style="margin-bottom: 1.5rem;">
-          <table class="table table-hover table-sm" id="round1-table" style="margin: 0;">
-            <thead style="background: #f9fafb;">
-              <tr><th>Spiller</th><th>Poeng</th><th>Kontroller</th></tr>
-            </thead>
-            <tbody>
-            {% for p in participants %}
-            <tr data-nickname-id="{{ p.id }}" style="transition: all 0.3s ease;">
-              <td style="font-weight: 600;">{{ p.name }}</td>
-              <td class="round-score-cell" style="font-weight: 700; color: #f59e0b;">-</td>
-              <td class="order-controls"></td>
-            </tr>
-            {% endfor %}
-            </tbody>
-          </table>
+        <div style="margin-bottom: 1.5rem;">
+          {% include "core/partials/scoreboard.html" with scoreboard=round_scoreboards.0 %}
         </div>
         <button class="btn btn-success w-100" id="save-round-1">
           <i class="fas fa-save me-2"></i>Lagre Runde 1
@@ -71,21 +58,8 @@
         <h4 style="border: none; color: #1f2937; margin-bottom: 1.5rem;">
           <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border-radius: 50%; margin-right: 0.75rem; font-weight: 700;">2</span>Runde 2
         </h4>
-        <div class="table-responsive" style="margin-bottom: 1.5rem;">
-          <table class="table table-hover table-sm" id="round2-table" style="margin: 0;">
-            <thead style="background: #f9fafb;">
-              <tr><th>Spiller</th><th>Poeng</th><th>Kontroller</th></tr>
-            </thead>
-            <tbody>
-            {% for p in participants %}
-            <tr data-nickname-id="{{ p.id }}" style="transition: all 0.3s ease;">
-              <td style="font-weight: 600;">{{ p.name }}</td>
-              <td class="round-score-cell" style="font-weight: 700; color: #f59e0b;">-</td>
-              <td class="order-controls"></td>
-            </tr>
-            {% endfor %}
-            </tbody>
-          </table>
+        <div style="margin-bottom: 1.5rem;">
+          {% include "core/partials/scoreboard.html" with scoreboard=round_scoreboards.1 %}
         </div>
         <button class="btn btn-success w-100" id="save-round-2">
           <i class="fas fa-save me-2"></i>Lagre Runde 2
@@ -97,21 +71,8 @@
         <h4 style="border: none; color: #1f2937; margin-bottom: 1.5rem;">
           <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; border-radius: 50%; margin-right: 0.75rem; font-weight: 700;">3</span>Runde 3
         </h4>
-        <div class="table-responsive" style="margin-bottom: 1.5rem;">
-          <table class="table table-hover table-sm" id="round3-table" style="margin: 0;">
-            <thead style="background: #f9fafb;">
-              <tr><th>Spiller</th><th>Poeng</th><th>Kontroller</th></tr>
-            </thead>
-            <tbody>
-            {% for p in participants %}
-            <tr data-nickname-id="{{ p.id }}" style="transition: all 0.3s ease;">
-              <td style="font-weight: 600;">{{ p.name }}</td>
-              <td class="round-score-cell" style="font-weight: 700; color: #f59e0b;">-</td>
-              <td class="order-controls"></td>
-            </tr>
-            {% endfor %}
-            </tbody>
-          </table>
+        <div style="margin-bottom: 1.5rem;">
+          {% include "core/partials/scoreboard.html" with scoreboard=round_scoreboards.2 %}
         </div>
         <button class="btn btn-success w-100" id="save-round-3">
           <i class="fas fa-save me-2"></i>Lagre Runde 3
@@ -124,22 +85,8 @@
       <h3 style="border: none; color: #1f2937; margin-bottom: 1.5rem; text-align: center;">
         <i class="fas fa-crown me-2" style="color: #f59e0b;"></i>Sluttresultat
       </h3>
-      <div class="table-responsive" style="margin-bottom: 2rem;">
-        <table class="table" id="final-standing" style="margin: 0;">
-          <thead style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;">
-            <tr><th>Plass</th><th>Spiller</th><th>Total</th><th>Kontroller</th></tr>
-          </thead>
-          <tbody>
-          {% for p in participants %}
-          <tr data-nickname-id="{{ p.id }}" style="transition: all 0.3s ease;">
-            <td class="rank-cell" style="font-weight: 700; font-size: 1.1rem;">-</td>
-            <td style="font-weight: 600;">{{ p.name }}</td>
-            <td class="total-cell" style="font-weight: 700; color: #f59e0b; font-size: 1.1rem;">-</td>
-            <td class="order-controls"></td>
-          </tr>
-          {% endfor %}
-          </tbody>
-        </table>
+      <div style="margin-bottom: 2rem;">
+        {% include "core/partials/scoreboard.html" with scoreboard=final_scoreboard %}
       </div>
       <div style="display: flex; gap: 1rem; justify-content: center;">
         <button class="btn btn-primary" id="compute-final">
@@ -152,7 +99,7 @@
     </div>
   </div>
 
-  <div id="basketball-data" data-event-id="{{ event.id }}" data-activity-id="{{ activity.id }}" style="display:none;">
+  <div id="football-data" data-event-id="{{ event.id }}" data-activity-id="{{ activity.id }}" style="display:none;">
     {{ round_rankings.1|json_script:"round1-data" }}
     {{ round_rankings.2|json_script:"round2-data" }}
     {{ round_rankings.3|json_script:"round3-data" }}
@@ -161,5 +108,5 @@
 </div>
 
 <script src="{% static 'js/tournament_base.js' %}"></script>
-<script src="{% static 'js/basketball.js' %}"></script>
+<script src="{% static 'js/football.js' %}"></script>
 {% endblock %}

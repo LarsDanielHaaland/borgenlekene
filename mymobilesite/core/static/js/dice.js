@@ -10,8 +10,7 @@
   const ACTIVITY_ID = eventDiv.dataset.activityId;
 
   function attachRowControls(table){
-    // use shared attachMoveControls which delegates and calls the onMove callback
-    attachMoveControls(table, (t) => { $all('tbody tr', t).forEach((r,i)=> r.querySelector('.rank-cell').textContent = i+1); });
+    Scoreboard.attachMoveControls(table, { movement: 'free' });
   }
 
   function applySavedFinal(){
@@ -36,8 +35,8 @@
   // use shared showNotification
 
   document.addEventListener('DOMContentLoaded', function(){
-    attachRowControls(finalTable);
     applySavedFinal();
+    attachRowControls(finalTable);
     saveBtn.addEventListener('click', function(){
       postOrder(getOrder()).then(data => { if(data.success) showNotification('Saved','success'); else showNotification('Save failed: ' + (data.error||JSON.stringify(data)),'error'); }).catch(e=>showNotification('Network error: '+e,'error'));
     });

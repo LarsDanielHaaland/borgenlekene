@@ -34,18 +34,7 @@
   </div>
 
   <h3>Sluttresultat</h3>
-  <table class="table" id="final-standing">
-    <thead><tr><th>Plass</th><th>Spiller</th><th></th></tr></thead>
-    <tbody>
-      {% for p in participants %}
-      <tr data-nickname-id="{{ p.id }}">
-        <td class="rank-cell"></td>
-        <td>{{ p.name }}</td>
-        <td class="order-controls"></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  {% include "core/partials/scoreboard.html" with scoreboard=scoreboard %}
 
   <button class="btn btn-primary" id="save-final">Lagre Sluttresultat</button>
 

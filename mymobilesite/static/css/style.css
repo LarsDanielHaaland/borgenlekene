@@ -439,6 +439,48 @@ body.dark-mode footer {
    HEADINGS
    ============================================ */
 
+.scoreboard-table {
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.scoreboard-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+.scoreboard-table .scoreboard-player {
+    font-weight: 600;
+}
+
+.scoreboard-table .scoreboard-emphasis {
+    color: var(--scoreboard-accent, var(--primary-color));
+    font-weight: 700;
+}
+
+.scoreboard-table .order-controls {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.scoreboard-table .order-controls .btn {
+    color: var(--scoreboard-accent, var(--primary-color));
+    text-decoration: none;
+}
+
+.scoreboard-table .order-controls .btn:hover {
+    color: var(--scoreboard-accent-dark, var(--primary-dark));
+}
+
+.scoreboard-head-light th {
+    background: #f9fafb;
+    color: #374151;
+}
+
+.scoreboard-head-accent th {
+    background: linear-gradient(135deg, var(--scoreboard-accent), var(--scoreboard-accent-dark));
+    color: white;
+}
+
 h1 {
     font-size: 2.5rem;
     font-weight: 700;

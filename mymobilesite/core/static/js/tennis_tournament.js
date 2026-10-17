@@ -6,90 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    function attachStandingsMoveControls() {
-      const finalTable = document.getElementById('final-standing');
-      const tbody = finalTable ? finalTable.querySelector('tbody') : document.getElementById('standings-body');
-      if (!tbody) return;
-
-      const rows = Array.from(tbody.querySelectorAll('tr'));
-      rows.forEach((tr, i) => {
-        const wins = Number(tr.getAttribute('data-wins') || 0);
-        const controls = tr.querySelector('.order-controls');
-        if (!controls) return;
-        controls.innerHTML = '';
-
-        if (i > 0) {
-          const prev = rows[i - 1];
-          const prevWins = Number(prev.getAttribute('data-wins') || 0);
-          if (prevWins === wins) {
-            const up = document.createElement('button');
-            up.type = 'button';
-            up.className = 'btn btn-sm btn-light move-up me-1';
-            up.textContent = '▲';
-            controls.appendChild(up);
-          }
-        }
-
-        if (i < rows.length - 1) {
-          const next = rows[i + 1];
-          const nextWins = Number(next.getAttribute('data-wins') || 0);
-          if (nextWins === wins) {
-            const down = document.createElement('button');
-            down.type = 'button';
-            down.className = 'btn btn-sm btn-light move-down';
-            down.textContent = '▼';
-            controls.appendChild(down);
-          }
-        }
-      });
-
-      if (tbody._tennisTieHandler) {
-        tbody.removeEventListener('click', tbody._tennisTieHandler);
-      }
-
-      tbody._tennisTieHandler = (event) => {
-        const upButton = event.target.closest('.move-up');
-        const downButton = event.target.closest('.move-down');
-        if (!upButton && !downButton) return;
-
-        const tr = event.target.closest('tr');
-        if (!tr) return;
-
-        const wins = Number(tr.getAttribute('data-wins') || 0);
-        const prev = tr.previousElementSibling;
-        const next = tr.nextElementSibling;
-
-        if (upButton && prev) {
-          const prevWins = Number(prev.getAttribute('data-wins') || 0);
-          if (prevWins === wins) {
-            prev.parentNode.insertBefore(tr, prev);
-          }
-        }
-
-        if (downButton && next) {
-          const nextWins = Number(next.getAttribute('data-wins') || 0);
-          if (nextWins === wins) {
-            next.parentNode.insertBefore(next, tr);
-          }
-        }
-
-        const updatedRows = Array.from(tbody.querySelectorAll('tr'));
-        updatedRows.forEach((row, index) => {
-          const rankCell = row.querySelector('.rank-cell');
-          if (rankCell) rankCell.textContent = index + 1;
-        });
-
-        tennisManualOrder = updatedRows.map(row => Number(row.getAttribute('data-nickname-id')));
-        attachStandingsMoveControls();
-      };
-
-      tbody.addEventListener('click', tbody._tennisTieHandler);
-    }
-
-    let tennisManualOrder = null;
-
-    // initial attach for existing server-rendered standings
-    attachStandingsMoveControls();
+    const finalTable = document.getElementById('final-standing');
+    const standingsColumns = [
+      { key: 'wins', cellClass: 'wins-cell', emphasize: true },
+      { key: 'losses', cellClass: 'losses-cell' }
+    ];
+    Scoreboard.attachMoveControls(finalTable, { movement: 'ties' });
   
     // Save tiebreaks button: save the current standings order for tiebreak resolution
     const saveTiebreaksBtn = document.getElementById('save-tiebreaks-btn');
@@ -263,25 +185,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Update standings table if we received standings
           if (latestStandings) {
-            const finalTable = document.getElementById('final-standing');
-            const tbody = finalTable ? finalTable.querySelector('tbody') : document.getElementById('standings-body');
-            if (tbody) {
-              tbody.innerHTML = '';
-              latestStandings.forEach((s, idx) => {
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-nickname-id', s.id || '');
-                tr.setAttribute('data-wins', s.wins || 0);
-                tr.setAttribute('data-losses', s.losses || 0);
-                tr.innerHTML = `
-                  <td class="rank-cell" style="font-weight: 700; font-size: 1.1rem;">${idx + 1}</td>
-                  <td style="font-weight: 600;">${s.name}</td>
-                  <td class="wins-cell" style="font-weight: 700; color: #10b981; font-size: 1.1rem;">${s.wins}</td>
-                  <td class="losses-cell" style="font-weight: 600; color: #6b7280;">${s.losses}</td>
-                  <td class="order-controls"></td>
-                `;
-                tbody.appendChild(tr);
-              });
-              attachStandingsMoveControls();
+            if (finalTable) {
+              Scoreboard.renderRows(finalTable, latestStandings.map(standing => ({
+                id: standing.id,
+                name: standing.name,
+                tieValue: standing.wins,
+                metrics: { wins: standing.wins, losses: standing.losses }
+              })), standingsColumns);
+              Scoreboard.attachMoveControls(finalTable, { movement: 'ties' });
             }
             if (statusEl) statusEl.textContent = 'Kampresultater lagret. Lagre Tiebreaks for å lagre rekkefølgen.';
           } else {

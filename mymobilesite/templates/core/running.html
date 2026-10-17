@@ -76,29 +76,13 @@
     <div class="col-md-6">
       <h4>Resultater</h4>
       <div class="card">
-        <div class="table-responsive">
-          <table class="table table-striped table-sm mb-0">
-            <thead>
-              <tr><th>Navn</th><th>Tid</th><th>Poeng</th><th></th></tr>
-            </thead>
-            <tbody id="running-standings">
-              {% for p in participants %}
-                {% if p.result %}
-                  <tr>
-                    <td>{{ p.nickname.name }}</td>
-                    <td>{{ p.result.time_seconds|mmss }}</td>
-                    <td></td>
-                  </tr>
-                {% endif %}
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
+        {% include "core/partials/scoreboard.html" with scoreboard=scoreboard %}
       </div>
     </div>
   </div>
 
   <form style="display:none;">{% csrf_token %}</form>
+  <script src="{% static 'js/tournament_base.js' %}"></script>
   <script src="{% static 'js/running.js' %}"></script>
 
   <!-- Manual Set Modal -->

@@ -1,6 +1,121 @@
 // Shared tournament utilities used by football/basketball/dice pages
 (function(window){
   const Tournament = {};
+  const Scoreboard = {};
+
+  function tableRows(table){
+    return table ? Array.from(table.querySelectorAll('tbody tr')) : [];
+  }
+
+  function canMove(row, neighbor, movement){
+    if(movement !== 'ties') return true;
+    const value = row.dataset.tieValue;
+    return value !== undefined && value !== '' && value === neighbor.dataset.tieValue;
+  }
+
+  Scoreboard.getOrder = function(table){
+    return tableRows(table).map(row => getRowId(row));
+  };
+
+  Scoreboard.updateRanks = function(table){
+    tableRows(table).forEach((row, index) => {
+      const rank = row.querySelector('.rank-cell');
+      if(rank) rank.textContent = index + 1;
+    });
+  };
+
+  Scoreboard.renderRows = function(table, rows, columns){
+    const tbody = table.querySelector('tbody');
+    tbody.replaceChildren();
+    rows.forEach((row, index) => {
+      const tr = document.createElement('tr');
+      tr.dataset.nicknameId = row.id;
+      if(row.tieValue !== undefined && row.tieValue !== null) tr.dataset.tieValue = row.tieValue;
+
+      const rank = document.createElement('td');
+      rank.className = 'rank-cell';
+      rank.textContent = row.rank || index + 1;
+      tr.appendChild(rank);
+
+      const name = document.createElement('td');
+      name.className = 'scoreboard-player';
+      name.textContent = row.name;
+      tr.appendChild(name);
+
+      columns.forEach(column => {
+        const cell = document.createElement('td');
+        cell.className = column.cellClass || '';
+        if(column.emphasize) cell.classList.add('scoreboard-emphasis');
+        const value = row.metrics ? row.metrics[column.key] : '';
+        cell.textContent = value === undefined || value === null || value === '' ? '-' : value;
+        tr.appendChild(cell);
+      });
+
+      const controls = document.createElement('td');
+      controls.className = 'order-controls';
+      tr.appendChild(controls);
+      tbody.appendChild(tr);
+    });
+    Scoreboard.updateRanks(table);
+  };
+
+  Scoreboard.refreshControls = function(table, movement){
+    const rows = tableRows(table);
+    rows.forEach((row, index) => {
+      const cell = row.querySelector('.order-controls');
+      if(!cell) return;
+      cell.replaceChildren();
+
+      const previous = rows[index - 1];
+      if(previous && canMove(row, previous, movement)) {
+        const up = document.createElement('button');
+        up.type = 'button';
+        up.className = 'btn btn-sm btn-link move-up';
+        up.textContent = '\u25b2';
+        up.title = 'Flytt opp';
+        up.setAttribute('aria-label', 'Flytt opp');
+        cell.appendChild(up);
+      }
+
+      const next = rows[index + 1];
+      if(next && canMove(row, next, movement)) {
+        const down = document.createElement('button');
+        down.type = 'button';
+        down.className = 'btn btn-sm btn-link move-down';
+        down.textContent = '\u25bc';
+        down.title = 'Flytt ned';
+        down.setAttribute('aria-label', 'Flytt ned');
+        cell.appendChild(down);
+      }
+    });
+  };
+
+  Scoreboard.attachMoveControls = function(table, options){
+    if(!table) return;
+    if(typeof options === 'function') options = { onMove: options };
+    options = options || {};
+    const movement = options.movement || table.dataset.movePolicy || 'free';
+    Scoreboard.refreshControls(table, movement);
+    if(table._scoreboardMoveHandler) table.removeEventListener('click', table._scoreboardMoveHandler);
+    table._scoreboardMoveHandler = event => {
+      const up = event.target.closest('.move-up');
+      const down = event.target.closest('.move-down');
+      if(!up && !down) return;
+      const row = event.target.closest('tr');
+      if(!row || !table.contains(row)) return;
+      const neighbor = up ? row.previousElementSibling : row.nextElementSibling;
+      if(!neighbor || !canMove(row, neighbor, movement)) return;
+      if(up) neighbor.parentNode.insertBefore(row, neighbor);
+      else neighbor.parentNode.insertBefore(neighbor, row);
+
+      Scoreboard.updateRanks(table);
+      Scoreboard.refreshControls(table, movement);
+      if(typeof options.onMove === 'function') options.onMove(table);
+    };
+    table.addEventListener('click', table._scoreboardMoveHandler);
+  };
+
+  window.Scoreboard = Scoreboard;
 
   function getRowId(row){
     const attr = row.getAttribute('data-nickname-id');
@@ -35,35 +150,8 @@
     setTimeout(()=>{ el.style.transition='opacity 0.3s'; el.style.opacity='0'; setTimeout(()=>el.remove(),300); }, 3000);
   };
 
-  // Attach up/down controls to a table's rows. onMove(table) is called after any move.
   Tournament.attachMoveControls = function(table, onMove){
-    if(!table) return;
-    const tbody = table.querySelector('tbody');
-    // clear existing controls
-    Array.from(tbody.querySelectorAll('.order-controls')).forEach(c=>{ c.innerHTML = ''; });
-
-    Array.from(tbody.querySelectorAll('tr')).forEach(tr => {
-      const controls = tr.querySelector('.order-controls');
-      if(!controls) return;
-      const up = document.createElement('button'); up.type='button'; up.className='btn btn-sm btn-link move-up'; up.textContent='▲';
-      const down = document.createElement('button'); down.type='button'; down.className='btn btn-sm btn-link move-down'; down.textContent='▼';
-      controls.appendChild(up); controls.appendChild(down);
-    });
-
-    // event delegation on tbody
-    // remove any previous delegated handler
-    if(tbody._moveHandler) tbody.removeEventListener('click', tbody._moveHandler);
-    const handler = function(e){
-      const up = e.target.closest('.move-up');
-      const down = e.target.closest('.move-down');
-      if(!up && !down) return;
-      const tr = e.target.closest('tr'); if(!tr) return;
-      if(up){ const prev = tr.previousElementSibling; if(prev) prev.parentNode.insertBefore(tr, prev); }
-      if(down){ const next = tr.nextElementSibling; if(next) next.parentNode.insertBefore(next, tr); }
-      if(typeof onMove === 'function') onMove(table);
-    };
-    tbody._moveHandler = handler;
-    tbody.addEventListener('click', handler);
+    Scoreboard.attachMoveControls(table, { onMove });
   };
 
   Tournament.updateRoundScores = function(table){
@@ -78,7 +166,18 @@
     const tbody = table.querySelector('tbody');
     const map = {};
     Array.from(tbody.querySelectorAll('tr')).forEach(r => { const id = getRowId(r); if(id !== null) map[id] = r; });
-    savedOrder.forEach(id => { const r = map[id]; if(r) tbody.appendChild(r); });
+    const restored = new Set();
+    savedOrder.forEach(id => {
+      const row = map[id];
+      if(row){
+        tbody.appendChild(row);
+        restored.add(Number(id));
+      }
+    });
+    Object.entries(map).forEach(([id, row]) => {
+      if(!restored.has(Number(id))) tbody.appendChild(row);
+    });
+    Scoreboard.updateRanks(table);
   };
 
   Tournament.getOrderFromTable = function(table){
@@ -144,6 +243,7 @@
       const id = getRowId(r);
       const rc = r.querySelector('.rank-cell'); if(rc) rc.textContent = idx+1;
       const tot = r.querySelector('.total-cell'); if(tot) tot.textContent = (pointsMap[id] ? pointsMap[id].total : '');
+      if(pointsMap[id]) r.dataset.tieValue = pointsMap[id].total;
     });
 
     return pointsMap;
@@ -152,52 +252,29 @@
   // Attach final tie-only controls for swapping adjacent equal-total rows.
   Tournament.attachFinalControls = function(finalTable, pointsMap){
     if(!finalTable) return;
-    // ensure controls exist
-    Array.from(finalTable.querySelectorAll('tbody tr')).forEach(tr => {
-      const controls = tr.querySelector('.order-controls'); if(!controls) return; controls.innerHTML = '';
-      const up = document.createElement('button'); up.type='button'; up.className='btn btn-sm btn-link move-up'; up.textContent='▲'; up.style.display='none';
-      const down = document.createElement('button'); down.type='button'; down.className='btn btn-sm btn-link move-down'; down.textContent='▼'; down.style.display='none';
-      controls.appendChild(up); controls.appendChild(down);
+    Array.from(finalTable.querySelectorAll('tbody tr')).forEach(row => {
+      const points = pointsMap[getRowId(row)];
+      if(points) row.dataset.tieValue = points.total;
     });
-
-    // update visibility
-    Tournament.updateFinalControlsVisibility(finalTable, pointsMap);
-
-    // attach single click handler
-    const tableEl = finalTable;
-    if(tableEl._finalHandler) tableEl.removeEventListener('click', tableEl._finalHandler);
-    const handler = (e) => {
-      const up = e.target.closest('.move-up');
-      const down = e.target.closest('.move-down');
-      if(!up && !down) return;
-      const tr = e.target.closest('tr'); if(!tr) return;
-      const curId = getRowId(tr);
-      if(up){ const prev = tr.previousElementSibling; if(prev){ const prevId = getRowId(prev); if(pointsMap[curId] && pointsMap[prevId] && pointsMap[curId].total === pointsMap[prevId].total) prev.parentNode.insertBefore(tr, prev); } }
-      if(down){ const next = tr.nextElementSibling; if(next){ const nextId = getRowId(next); if(pointsMap[curId] && pointsMap[nextId] && pointsMap[curId].total === pointsMap[nextId].total) next.parentNode.insertBefore(next, tr); } }
-
-      // update ranks
-      Array.from(finalTable.querySelectorAll('tbody tr')).forEach((r, idx) => { const id = getRowId(r); const rc = r.querySelector('.rank-cell'); if(rc) rc.textContent = idx+1; const tot = r.querySelector('.total-cell'); if(tot) tot.textContent = (pointsMap[id] ? pointsMap[id].total : ''); });
-      // refresh visibility
-      Tournament.updateFinalControlsVisibility(finalTable, pointsMap);
-    };
-    tableEl._finalHandler = handler;
-    tableEl.addEventListener('click', handler);
+    Scoreboard.attachMoveControls(finalTable, { movement: 'ties' });
   };
 
   Tournament.updateFinalControlsVisibility = function(finalTable, pointsMap){
     if(!finalTable) return;
-    const rows = Array.from(finalTable.querySelectorAll('tbody tr'));
-    rows.forEach((r, idx) => {
-      const up = r.querySelector('.move-up'); const down = r.querySelector('.move-down');
-      if(up) up.style.display = 'none'; if(down) down.style.display = 'none';
-      const id = getRowId(r);
-      const prev = rows[idx-1]; if(prev){ const prevId = getRowId(prev); if(pointsMap && pointsMap[id] && pointsMap[prevId] && pointsMap[id].total === pointsMap[prevId].total) if(up) up.style.display = ''; }
-      const next = rows[idx+1]; if(next){ const nextId = getRowId(next); if(pointsMap && pointsMap[id] && pointsMap[nextId] && pointsMap[id].total === pointsMap[nextId].total) if(down) down.style.display = ''; }
-    });
+    if(pointsMap){
+      Array.from(finalTable.querySelectorAll('tbody tr')).forEach(row => {
+        const points = pointsMap[getRowId(row)];
+        if(points) row.dataset.tieValue = points.total;
+      });
+    }
+    Scoreboard.refreshControls(finalTable, 'ties');
   };
+
+  Tournament.Scoreboard = Scoreboard;
 
   // expose
   window.Tournament = Tournament;
+  window.Scoreboard = Scoreboard;
   window.getCookie = Tournament.getCookie;
   window.showNotification = Tournament.showNotification;
   window.attachMoveControls = Tournament.attachMoveControls;
