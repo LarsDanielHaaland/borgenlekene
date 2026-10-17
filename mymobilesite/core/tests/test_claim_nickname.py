@@ -22,6 +22,60 @@ class ClaimNicknameTest(TestCase):
         self.nick.refresh_from_db()
         self.assertEqual(self.nick.user, self.user)
 
+    def test_claim_user_page_links_nickname_to_user(self):
+        self.client.login(username='tester', password='pwd')
+        url = reverse('claim_user_page', kwargs={'pk': self.event.pk})
+
+        resp = self.client.post(url, {'nickname_id': self.nick.id, 'action': 'claim'})
+
+        self.assertRedirects(resp, url)
+        self.nick.refresh_from_db()
+        self.assertEqual(self.nick.user, self.user)
+
+    def test_both_claim_routes_keep_uninvited_message_and_leave_nickname_unclaimed(self):
+        inviter = User.objects.create_user(username='inviter', password='pwd')
+        Invitation.objects.create(
+            inviter=inviter,
+            event=self.event,
+            email='someone-else@example.com',
+        )
+        self.client.login(username='tester', password='pwd')
+
+        direct_url = reverse('claim_nickname', kwargs={
+            'pk': self.event.pk,
+            'nickname_id': self.nick.pk,
+        })
+        direct_response = self.client.get(direct_url, follow=True)
+        self.assertContains(
+            direct_response,
+            'You are not invited to this event and cannot claim a participant.',
+        )
+
+        portal_url = reverse('claim_user_page', kwargs={'pk': self.event.pk})
+        portal_response = self.client.post(
+            portal_url,
+            {'nickname_id': self.nick.pk, 'action': 'claim'},
+            follow=True,
+        )
+        self.assertContains(
+            portal_response,
+            'You are not invited to this event and cannot claim a participant.',
+        )
+        self.nick.refresh_from_db()
+        self.assertIsNone(self.nick.user)
+
+    def test_claim_user_page_can_unclaim_existing_nickname(self):
+        self.nick.user = self.user
+        self.nick.save(update_fields=['user'])
+        self.client.login(username='tester', password='pwd')
+        url = reverse('claim_user_page', kwargs={'pk': self.event.pk})
+
+        response = self.client.post(url, {'nickname_id': self.nick.pk, 'action': 'unclaim'})
+
+        self.assertRedirects(response, url)
+        self.nick.refresh_from_db()
+        self.assertIsNone(self.nick.user)
+
     def test_user_can_have_nicknames_in_multiple_events(self):
         # Claim in first event
         self.client.login(username='tester', password='pwd')

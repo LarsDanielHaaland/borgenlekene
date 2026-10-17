@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.db import IntegrityError
 
+from ..claiming import ClaimOutcome, claim_nickname as perform_nickname_claim
 from ..models import Event, ActivityRanking, Nickname
 from ..forms import EventForm, NicknameForm
 from .scoring import ACTIVITIES # Import ACTIVITIES from the sibling module
@@ -31,41 +32,11 @@ def claim_nickname(request, pk, nickname_id):
     event = get_object_or_404(Event, pk=pk)
     nick = get_object_or_404(Nickname, id=nickname_id, event=event)
 
-    # Ensure the user is invited to this event (by email or facebook profile)
-    # Event owner is always allowed
-    invited = False
-    inv_qs = Invitation.objects.filter(event=event)
-    if request.user == getattr(event, 'owner', None):
-        invited = True
-    # If there are no invitations for this event, allow claiming by any logged-in user
-    if not invited and not inv_qs.exists():
-        invited = True
-    if request.user.email:
-        invited = invited or inv_qs.filter(email__iexact=request.user.email).exists()
-    if not invited and SocialAccount is not None:
-        # If the user has an attached Facebook social account and there are
-        # facebook invitations for this event, consider them invited.
-        if SocialAccount.objects.filter(user=request.user, provider='facebook').exists():
-            fb_inv = inv_qs.filter(Q(facebook_profile__isnull=False) & ~Q(facebook_profile=''))
-            if fb_inv.exists():
-                invited = True
-
-    if not invited:
-        messages.error(request, 'You are not invited to this event and cannot claim a participant.')
+    outcome = perform_nickname_claim(event, request.user, nick)
+    if outcome != ClaimOutcome.CLAIMED:
+        messages.error(request, _claim_error_message(outcome))
         return redirect('event_detail', pk=event.pk)
 
-    # Enforce one claim per user per event
-    existing_claim = Nickname.objects.filter(event=event, user=request.user).exclude(pk=nick.pk).first()
-    if existing_claim:
-        messages.error(request, 'You have already claimed a participant for this event.')
-        return redirect('event_detail', pk=event.pk)
-
-    if nick.user and nick.user != request.user:
-        messages.error(request, 'This nickname is already claimed by another user.')
-        return redirect('event_detail', pk=event.pk)
-
-    nick.user = request.user
-    nick.save(update_fields=['user'])
     messages.success(request, f"You are now linked to '{nick.name}' for event '{event.name}'.")
     return redirect('event_detail', pk=event.pk)
 
@@ -98,40 +69,11 @@ def claim_user_page(request, pk):
             messages.success(request, f"You unclaimed '{nick.name}' for event '{event.name}'.")
             return redirect('claim_user_page', pk=event.pk)
 
-        # action == 'claim'
-        # Ensure the user is invited (event owner always allowed). If there
-        # are no invitations for the event, allow any authenticated user to
-        # claim.
-        invited = False
-        inv_qs = Invitation.objects.filter(event=event)
-        if request.user == getattr(event, 'owner', None):
-            invited = True
-        if not invited and not inv_qs.exists():
-            invited = True
-        if request.user.email:
-            invited = invited or inv_qs.filter(email__iexact=request.user.email).exists()
-        if not invited and SocialAccount is not None:
-            if SocialAccount.objects.filter(user=request.user, provider='facebook').exists():
-                fb_inv = inv_qs.filter(Q(facebook_profile__isnull=False) & ~Q(facebook_profile=''))
-                if fb_inv.exists():
-                    invited = True
-
-        if not invited:
-            messages.error(request, 'You are not invited to this event and cannot claim a participant.')
+        outcome = perform_nickname_claim(event, request.user, nick)
+        if outcome != ClaimOutcome.CLAIMED:
+            messages.error(request, _claim_error_message(outcome))
             return redirect('claim_user_page', pk=event.pk)
 
-        # Enforce one claim per user per event
-        existing_claim = Nickname.objects.filter(event=event, user=request.user).exclude(pk=nick.pk).first()
-        if existing_claim:
-            messages.error(request, 'You have already claimed a participant for this event.')
-            return redirect('claim_user_page', pk=event.pk)
-
-        if nick.user and nick.user != request.user:
-            messages.error(request, 'This nickname is already claimed by another user.')
-            return redirect('claim_user_page', pk=event.pk)
-
-        nick.user = request.user
-        nick.save(update_fields=['user'])
         messages.success(request, f"You claimed '{nick.name}' for event '{event.name}'.")
         return redirect('claim_user_page', pk=event.pk)
 
@@ -140,6 +82,15 @@ def claim_user_page(request, pk):
         'nicknames': nicknames,
     }
     return render(request, 'core/claim_user.html', context)
+
+
+def _claim_error_message(outcome):
+    return {
+        ClaimOutcome.NOT_INVITED: 'You are not invited to this event and cannot claim a participant.',
+        ClaimOutcome.ALREADY_HAS_NICKNAME: 'You have already claimed a participant for this event.',
+        ClaimOutcome.NICKNAME_UNAVAILABLE: 'This nickname is already claimed by another user.',
+    }[outcome]
+
 
 def event_list(request):
     """Show only featured events and those relevant to the logged-in user."""
