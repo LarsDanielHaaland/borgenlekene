@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.contrib.auth import get_user_model
 
 from core.models import Event, Nickname
 
@@ -72,3 +73,27 @@ class SharedScoreboardTemplateTests(TestCase):
                     free_tables,
                 )
                 self.assertContains(response, f"--scoreboard-accent: {accent}")
+
+    def test_event_create_and_portal_use_responsive_layout_classes(self):
+        event_response = self.get_page("event_detail")
+        self.assertContains(event_response, "responsive-columns--equal event-detail-layout")
+
+        create_response = self.client.get(reverse("event_create"))
+        self.assertContains(create_response, "responsive-columns--main-aside")
+
+        user = get_user_model().objects.create_user(
+            username="mobile-layout-user",
+            email="mobile-layout@example.com",
+            password="test-password",
+        )
+        self.client.force_login(user)
+        portal_response = self.client.get(reverse("portal"))
+        self.assertContains(portal_response, "responsive-columns responsive-columns--equal")
+
+    def test_narrow_game_controls_have_responsive_hooks(self):
+        running_response = self.get_page("running_page")
+        self.assertContains(running_response, "running-toolbar")
+        self.assertContains(running_response, "running-participant-controls")
+
+        tennis_response = self.get_page("tennis_tournament")
+        self.assertContains(tennis_response, "tennis-match-row")

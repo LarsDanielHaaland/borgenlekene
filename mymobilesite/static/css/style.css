@@ -555,6 +555,79 @@ main {
     padding: 2rem 0;
 }
 
+.responsive-columns {
+    display: grid;
+    gap: 2rem;
+    min-width: 0;
+}
+
+.responsive-columns > * {
+    min-width: 0;
+}
+
+.responsive-columns--equal {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.responsive-columns--main-aside {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+
+.responsive-card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+    min-width: 0;
+}
+
+.form-date-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.rules-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: 1.25rem;
+    margin-top: 1rem;
+}
+
+.responsive-columns > *,
+.responsive-card-grid > *,
+.form-date-grid > *,
+.rules-grid > * {
+    min-width: 0;
+}
+
+.scoreboard-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.scoreboard-table th,
+.scoreboard-table td {
+    overflow-wrap: anywhere;
+}
+
+.scoreboard-table th:first-child,
+.scoreboard-table .rank-cell {
+    width: 3rem;
+}
+
+.scoreboard-table th:last-child,
+.scoreboard-table .order-controls {
+    width: 3.25rem;
+}
+
+@media (max-width: 767.98px) {
+    .responsive-columns {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+    }
+}
+
 /* ============================================
    EVENT LIST STYLING
    ============================================ */
@@ -805,6 +878,76 @@ main {
     .participant-score {
         align-self: flex-end;
     }
+
+    header > .container.d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.5rem;
+    }
+
+    header .auth-section {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .responsive-columns {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+    }
+
+    .responsive-card-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-date-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .participant-list {
+        padding: 1rem;
+    }
+
+    .participant-list-header {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .participant-item > div:last-child {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .event-activity-row {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 0.5rem !important;
+    }
+
+    .event-activity-row > a,
+    .event-activity-row > button,
+    .event-activity-row > form {
+        align-self: flex-start;
+    }
+
+    .tennis-match-row {
+        flex-direction: column;
+        gap: 0.35rem !important;
+    }
+
+    .tennis-match-row .winner-btn {
+        width: 100%;
+        min-width: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .event-create-actions {
+        flex-wrap: wrap;
+    }
 }
 
 @media (max-width: 480px) {
@@ -830,6 +973,110 @@ main {
 
     main {
         padding: 1rem 0;
+    }
+
+    .activity-section {
+        padding: 1rem;
+    }
+
+    .scoreboard-table th,
+    .scoreboard-table td {
+        padding: 0.35rem 0.25rem;
+        font-size: 0.82rem;
+    }
+
+    .scoreboard-table .order-controls .btn {
+        padding: 0;
+        font-size: 0.75rem;
+        line-height: 1.2;
+    }
+
+    .scoreboard-table th:first-child,
+    .scoreboard-table .rank-cell {
+        width: 2.5rem;
+    }
+
+    .scoreboard-table th:last-child {
+        display: none;
+    }
+
+    .scoreboard-table td.order-controls {
+        width: 2rem;
+    }
+
+    .scoreboard-table .scoreboard-mobile-secondary {
+        display: none;
+    }
+
+    .running-toolbar {
+        width: 100%;
+        min-width: 0;
+        gap: 0.35rem !important;
+    }
+
+    .running-toolbar .btn {
+        padding: 0.35rem 0.45rem;
+    }
+
+    .running-control-label,
+    .running-save-label {
+        display: none;
+    }
+
+    #running-status {
+        flex: 1 1 2rem;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 0.72rem;
+    }
+
+    .running-participant-name {
+        flex: 1 1 3rem;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .running-participant-name strong {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .running-participant-controls {
+        flex: 0 0 auto;
+        gap: 0.15rem !important;
+    }
+
+    .running-participant-controls .btn {
+        padding-left: 0.35rem !important;
+        padding-right: 0.35rem !important;
+    }
+
+    .event-create-actions .btn {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    .game-page-header {
+        min-width: 0;
+        align-items: flex-start !important;
+    }
+
+    .game-page-header > div {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    .game-page-header h1,
+    .game-page-header h2 {
+        overflow-wrap: anywhere;
+    }
+
+    .game-page-header > a {
+        align-self: flex-start;
+        max-width: 100%;
     }
 }
 
@@ -905,24 +1152,6 @@ main {
     align-items: center;
 }
 
-.row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 1.5rem;
-}
-
-.col-md-6 {
-    grid-column: span 1;
-}
-
-@media (min-width: 768px) {
-    .row {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (min-width: 1024px) {
-    .row {
-        grid-template-columns: repeat(3, 1fr);
-    }
+.scoreboard-wrapper {
+    min-width: 0;
 }

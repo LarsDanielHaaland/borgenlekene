@@ -257,7 +257,7 @@ def tennis_tournament(request, pk):
             'accent_dark': '#059669',
             'columns': [
                 {'key': 'wins', 'label': 'Seire', 'cell_class': 'wins-cell', 'emphasize': True},
-                {'key': 'losses', 'label': 'Tap', 'cell_class': 'losses-cell'},
+                {'key': 'losses', 'label': 'Tap', 'cell_class': 'losses-cell', 'mobile_hide': True},
             ],
             'rows': [
                 {
@@ -322,7 +322,7 @@ def running_page(request, pk):
             'accent_dark': '#0284c7',
             'columns': [
                 {'key': 'time', 'label': 'Tid'},
-                {'key': 'points', 'label': 'Poeng', 'emphasize': True},
+                {'key': 'points', 'label': 'Poeng', 'emphasize': True, 'mobile_hide': True},
             ],
             'rows': scoreboard_rows,
         },

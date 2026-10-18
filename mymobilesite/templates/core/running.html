@@ -4,7 +4,7 @@
 {% block title %}Løping - {{ event.name }}{% endblock %}
 
 {% block content %}
-  <div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="game-page-header d-flex justify-content-between align-items-center flex-wrap mb-3">
     <div>
       <h2 class="mb-0">Løping
         <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle ms-2" style="width: 28px; height: 28px; padding: 0; line-height: 1;" data-bs-toggle="modal" data-bs-target="#rulesModal" title="Hvordan spillet fungerer">
@@ -31,49 +31,49 @@
     </div>
   </div>
 
-  <div class="d-flex align-items-center flex-nowrap mb-3" style="gap: 0.75rem;">
+  <div class="running-toolbar d-flex align-items-center flex-nowrap mb-3" style="gap: 0.75rem;">
     <div class="btn-group" role="group">
-      <button id="mode-individual" class="btn btn-outline-secondary btn-sm active">Individuell Start</button>
-      <button id="mode-group" class="btn btn-outline-secondary btn-sm">Gruppestart</button>
+      <button id="mode-individual" class="btn btn-outline-secondary btn-sm active" aria-label="Individuell start" title="Individuell start"><i class="fas fa-user"></i><span class="running-control-label">Individuell Start</span></button>
+      <button id="mode-group" class="btn btn-outline-secondary btn-sm" aria-label="Gruppestart" title="Gruppestart"><i class="fas fa-users"></i><span class="running-control-label">Gruppestart</span></button>
     </div>
-    <button id="save-running-btn" class="btn btn-primary btn-sm">Lagre Resultater</button>
+    <button id="save-running-btn" class="btn btn-primary btn-sm" aria-label="Lagre resultater" title="Lagre resultater"><i class="fas fa-save"></i><span class="running-save-label">Lagre Resultater</span></button>
     <div id="running-status" class="text-muted text-nowrap"></div>
     <div id="running-data" data-event-id="{{ event.pk }}" style="display:none;"></div>
   </div>
 
-  <div class="row">
-    <div class="col-md-6">
+  <div class="responsive-columns responsive-columns--equal running-layout">
+    <div class="running-column">
       <h4>Deltakere</h4>
       <ul class="list-group" id="participants-list">
         {% for p in participants %}
-          <li class="list-group-item d-flex justify-content-between align-items-center flex-nowrap py-2 px-3">
-            <div class="text-nowrap me-2">
+          <li class="list-group-item running-participant-item d-flex justify-content-between align-items-center flex-nowrap py-2 px-3">
+            <div class="running-participant-name text-nowrap me-2">
               <strong>{{ p.nickname.name }}</strong>
             </div>
-            <div class="d-flex align-items-center flex-nowrap" style="gap: 0.3rem;">
+            <div class="running-participant-controls d-flex align-items-center flex-nowrap" style="gap: 0.3rem;">
               <!-- displayed time (final or existing) -->
               <span class="time-display text-nowrap" data-nickname-id="{{ p.nickname.id }}" style="min-width: 3.5ch;">{% if p.result %}{{ p.result.time_seconds|mmss }}{% else %}-{% endif %}</span>
               <!-- live clock while running -->
               <span class="live-clock text-monospace" data-nickname-id="{{ p.nickname.id }}" style="min-width:4ch; display:none;">0:00</span>
 
               <!-- Individual start/stop buttons -->
-              <button class="btn btn-sm btn-outline-success start-btn individual-start py-0 px-2" data-nickname-id="{{ p.nickname.id }}">Start</button>
-              <button class="btn btn-sm btn-outline-danger stop-btn individual-stop py-0 px-2" data-nickname-id="{{ p.nickname.id }}" disabled>Stopp</button>
+              <button class="btn btn-sm btn-outline-success start-btn individual-start py-0 px-2" data-nickname-id="{{ p.nickname.id }}" aria-label="Start" title="Start"><i class="fas fa-play"></i><span class="running-control-label">Start</span></button>
+              <button class="btn btn-sm btn-outline-danger stop-btn individual-stop py-0 px-2" data-nickname-id="{{ p.nickname.id }}" disabled aria-label="Stopp" title="Stopp"><i class="fas fa-stop"></i><span class="running-control-label">Stopp</span></button>
 
               <!-- Reset and Manual Set buttons (icon-only to save space) -->
-              <button class="btn btn-sm btn-outline-secondary reset-btn py-0 px-2" data-nickname-id="{{ p.nickname.id }}" title="Tilbakestill"><i class="fas fa-rotate-left"></i></button>
-              <button class="btn btn-sm btn-outline-secondary manual-set-btn py-0 px-2" data-nickname-id="{{ p.nickname.id }}" title="Angi tid"><i class="fas fa-pen"></i></button>
+              <button class="btn btn-sm btn-outline-secondary reset-btn py-0 px-2" data-nickname-id="{{ p.nickname.id }}" title="Tilbakestill" aria-label="Tilbakestill"><i class="fas fa-rotate-left"></i></button>
+              <button class="btn btn-sm btn-outline-secondary manual-set-btn py-0 px-2" data-nickname-id="{{ p.nickname.id }}" title="Angi tid" aria-label="Angi tid"><i class="fas fa-pen"></i></button>
 
               <!-- Group start button (shown only when group mode active) -->
-              <button class="btn btn-sm btn-outline-primary start-btn group-start py-0 px-2" data-nickname-id="{{ p.nickname.id }}" style="display:none;">Gruppestart</button>
-              <button class="btn btn-sm btn-outline-danger stop-btn group-stop py-0 px-2" data-nickname-id="{{ p.nickname.id }}" disabled style="display:none;">Stopp</button>
+              <button class="btn btn-sm btn-outline-primary start-btn group-start py-0 px-2" data-nickname-id="{{ p.nickname.id }}" style="display:none;" aria-label="Gruppestart" title="Gruppestart"><i class="fas fa-users"></i><span class="running-control-label">Gruppestart</span></button>
+              <button class="btn btn-sm btn-outline-danger stop-btn group-stop py-0 px-2" data-nickname-id="{{ p.nickname.id }}" disabled style="display:none;" aria-label="Stopp" title="Stopp"><i class="fas fa-stop"></i><span class="running-control-label">Stopp</span></button>
             </div>
           </li>
         {% endfor %}
       </ul>
     </div>
 
-    <div class="col-md-6">
+    <div class="running-column">
       <h4>Resultater</h4>
       <div class="card">
         {% include "core/partials/scoreboard.html" with scoreboard=scoreboard %}

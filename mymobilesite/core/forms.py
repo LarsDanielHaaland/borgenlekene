@@ -70,6 +70,11 @@ class EventForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        for field in self.fields.values():
+            if isinstance(field.widget, forms.Select):
+                field.widget.attrs.setdefault('class', 'form-select')
+            else:
+                field.widget.attrs.setdefault('class', 'form-control')
         self.fields['status'].required = False
         if not self.data.get('status') and not self.initial.get('status'):
             self.fields['status'].initial = 'future'

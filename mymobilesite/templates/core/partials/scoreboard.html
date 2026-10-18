@@ -6,7 +6,7 @@
         <th>Plass</th>
         <th>{{ scoreboard.participant_label|default:"Spiller" }}</th>
         {% for column in scoreboard.columns %}
-          <th>{{ column.label }}</th>
+          <th{% if column.mobile_hide %} class="scoreboard-mobile-secondary"{% endif %}>{{ column.label }}</th>
         {% endfor %}
         <th>Kontroller</th>
       </tr>
@@ -17,9 +17,9 @@
           <td class="rank-cell">{{ row.rank|default:forloop.counter }}</td>
           <td class="scoreboard-player">{{ row.name }}</td>
           {% for column in scoreboard.columns %}
-            <td class="{{ column.cell_class }}{% if column.emphasize %} scoreboard-emphasis{% endif %}">{{ row.metrics|get_item:column.key|default:"-" }}</td>
+            <td class="{{ column.cell_class }}{% if column.emphasize %} scoreboard-emphasis{% endif %}{% if column.mobile_hide %} scoreboard-mobile-secondary{% endif %}">{{ row.metrics|get_item:column.key|default:"-" }}</td>
           {% endfor %}
-          <td class="order-controls"></td>
+          <td class="order-controls" aria-label="Kontroller for {{ row.name }}"></td>
         </tr>
       {% endfor %}
     </tbody>

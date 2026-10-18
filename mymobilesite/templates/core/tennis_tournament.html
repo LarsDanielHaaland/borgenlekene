@@ -51,7 +51,7 @@
     </div>
   {% endif %}
 
-  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start;">
+  <div class="responsive-columns responsive-columns--main-aside">
     <!-- LEFT: MATCH SCHEDULE -->
     <div class="activity-section">
       <h3 style="border: none; color: #1f2937; margin-bottom: 1.5rem;">
@@ -81,7 +81,7 @@
               <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                 {% for item in round.list %}
                   <div style="background: white; border: 2px solid #e5e7eb; border-radius: 0.5rem; padding: 1rem; transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1)'; this.style.borderColor='#10b981';" onmouseout="this.style.boxShadow='none'; this.style.borderColor='#e5e7eb';">
-                    <div style="display: flex; gap: 0.75rem;">
+                    <div class="tennis-match-row" style="display: flex; gap: 0.75rem;">
                       {# Button for Player 1 #}
                       <button class="btn btn-sm winner-btn" 
                               style="flex: 1; min-width: 0; {% if item.match and item.match.winner == item.player1 %}background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;{% else %}border: 2px solid #e5e7eb; color: #374151;{% endif %} transition: all 0.3s ease; font-weight: 600;"
@@ -90,7 +90,7 @@
                               data-winner-id="{{ item.player1.id }}">
                         {{ item.player1.name }}
                       </button>
-                      <div style="display: flex; align-items: center; padding: 0 0.5rem; color: #9ca3af; font-weight: 700;">vs</div>
+                      <div class="tennis-match-separator" style="display: flex; align-items: center; padding: 0 0.5rem; color: #9ca3af; font-weight: 700;">vs</div>
                       {# Button for Player 2 #}
                       <button class="btn btn-sm winner-btn" 
                               style="flex: 1; min-width: 0; {% if item.match and item.match.winner == item.player2 %}background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;{% else %}border: 2px solid #e5e7eb; color: #374151;{% endif %} transition: all 0.3s ease; font-weight: 600;"
