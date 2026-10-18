@@ -244,6 +244,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (timers[manualTargetId]) delete timers[manualTargetId];
     const live = participantList.querySelector(`.live-clock[data-nickname-id="${manualTargetId}"]`);
     if (live) live.style.display = 'none';
+    participantList.querySelectorAll(`.start-btn[data-nickname-id="${manualTargetId}"]`).forEach(b => {
+      b.disabled = false;
+      b.classList.remove('btn-success', 'btn-primary');
+      b.classList.add(b.classList.contains('group-start') ? 'btn-outline-primary' : 'btn-outline-success');
+    });
+    participantList.querySelectorAll(`.stop-btn[data-nickname-id="${manualTargetId}"]`).forEach(b => { b.disabled = true; });
     statusEl.textContent = `Set ${formatMMSS(totalSeconds)} for participant ${manualTargetId}.`;
     recalcStandings();
     stopClockIntervalIfIdle();
@@ -282,6 +288,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (span) span.textContent = '-';
       const live = participantList.querySelector(`.live-clock[data-nickname-id="${id}"]`);
       if (live) live.style.display = 'none';
+      participantList.querySelectorAll(`.start-btn[data-nickname-id="${id}"]`).forEach(b => {
+        b.disabled = false;
+        b.classList.remove('btn-success', 'btn-primary');
+        b.classList.add(b.classList.contains('group-start') ? 'btn-outline-primary' : 'btn-outline-success');
+      });
+      participantList.querySelectorAll(`.stop-btn[data-nickname-id="${id}"]`).forEach(b => { b.disabled = true; });
       statusEl.textContent = `Reset timer for participant ${id}.`;
       recalcStandings();
       stopClockIntervalIfIdle();
