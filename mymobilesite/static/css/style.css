@@ -280,6 +280,30 @@ header .d-flex {
     color: var(--text-color);
 }
 
+.event-create-form .form-control,
+.event-create-form .form-select {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+}
+
+.event-create-form .form-control:focus,
+.event-create-form .form-select:focus {
+    border-color: #059669;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+}
+
+body.dark-mode .event-create-form .form-control,
+body.dark-mode .event-create-form .form-select {
+    background: #12352e;
+    border-color: #047857;
+}
+
+body.dark-mode .event-create-form .form-control:focus,
+body.dark-mode .event-create-form .form-select:focus {
+    border-color: #34d399;
+    box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+}
+
 .signup-form .mb-3,
 .login-form .mb-3 {
     display: grid;
