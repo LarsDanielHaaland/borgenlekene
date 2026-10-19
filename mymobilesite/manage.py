@@ -9,7 +9,6 @@ def main():
     # Updated to use the new `project` package to reduce ambiguity between
     # the repository root and the inner package. The old value is left here
     # in a comment for reference.
-    # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mymobilesite.settings")
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
     try:
         from django.core.management import execute_from_command_line

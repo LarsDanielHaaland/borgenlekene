@@ -1,6 +1,10 @@
+from unittest.mock import patch
+
+from django.db import IntegrityError
 from django.test import TestCase
 from django.contrib.auth.models import User
 from core.models import Profile
+from core.registration import register_user_with_profile
 
 
 class SignupTests(TestCase):
@@ -14,6 +18,20 @@ class SignupTests(TestCase):
         self.assertEqual(resp.status_code, 302)
         user = User.objects.get(email='newuser@example.com')
         self.assertEqual(user.profile.display_name, 'CoolNickname')
+
+    def test_registration_rolls_back_user_when_profile_creation_fails(self):
+        def save_user():
+            return User.objects.create_user(
+                username='incomplete',
+                email='incomplete@example.com',
+                password='SuperSecretPass123',
+            )
+
+        with patch('core.registration.Profile.objects.create', side_effect=IntegrityError):
+            with self.assertRaises(IntegrityError):
+                register_user_with_profile(save_user, 'IncompleteProfile')
+
+        self.assertFalse(User.objects.filter(email='incomplete@example.com').exists())
 
     def test_signup_rejects_duplicate_display_name_case_insensitive(self):
         user = User.objects.create_user(username='existing', email='existing@example.com', password='x')

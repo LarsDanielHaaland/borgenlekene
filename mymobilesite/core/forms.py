@@ -5,6 +5,7 @@ from django.utils import timezone
 from allauth.account.forms import SignupForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
 from .models import Event, Nickname, Profile
+from .registration import register_user_with_profile, validate_display_name
 
 DEFAULT_EVENT_TIME = dt_time(10, 0)
 
@@ -18,17 +19,14 @@ class DisplayNameMixin(forms.Form):
     )
 
     def clean_display_name(self):
-        name = self.cleaned_data.get('display_name', '').strip()
-        if not name:
-            raise forms.ValidationError("Visningsnavn kan ikke være tomt.")
-        if Profile.objects.filter(display_name__iexact=name).exists():
-            raise forms.ValidationError(f"Visningsnavnet '{name}' er allerede tatt.")
-        return name
+        return validate_display_name(self.cleaned_data.get('display_name', ''))
 
     def save(self, request):
-        user = super().save(request)
-        Profile.objects.create(user=user, display_name=self.cleaned_data['display_name'])
-        return user
+        save_user = super().save
+        return register_user_with_profile(
+            lambda: save_user(request),
+            self.cleaned_data['display_name'],
+        )
 
 
 class CustomSignupForm(DisplayNameMixin, SignupForm):
