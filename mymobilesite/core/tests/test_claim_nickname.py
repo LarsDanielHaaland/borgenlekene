@@ -1,5 +1,9 @@
+from datetime import timedelta
+
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.formats import date_format
 
 from django.contrib.auth import get_user_model
 from core.models import Event, Nickname, Invitation
@@ -135,3 +139,64 @@ class ClaimNicknameTest(TestCase):
         self.assertContains(response, 'My Event')
         self.assertContains(response, 'Invited Event')
         self.assertNotContains(response, 'Hidden Event')
+
+    def test_event_list_shows_first_time_visitor_hero_and_empty_state(self):
+        response = self.client.get(reverse('event_list'))
+
+        self.assertContains(response, 'Samle gjengen til Borgenlekene')
+        self.assertContains(response, 'Planlegg en dag med fem konkurranser')
+        self.assertContains(response, 'Terningspill')
+        self.assertContains(response, '<details class="landing-explainer">', html=False)
+        self.assertContains(response, '<summary>Hvordan fungerer det?</summary>', html=False)
+        self.assertContains(response, 'Ingen Arrangementer Ennå!')
+        self.assertNotContains(response, 'Opprett Ditt Første Arrangement')
+        self.assertContains(response, 'class="btn btn-success landing-hero-cta"', html=False)
+
+    def test_event_list_orders_sections_featured_upcoming_ongoing_past(self):
+        now = timezone.now()
+        Event.objects.create(name='Featured order', status='featured')
+        Event.objects.create(
+            name='Upcoming order',
+            owner=self.user,
+            start_date=now + timedelta(days=2),
+            end_date=now + timedelta(days=3),
+        )
+        Event.objects.create(
+            name='Ongoing order',
+            owner=self.user,
+            start_date=now - timedelta(hours=1),
+            end_date=now + timedelta(hours=1),
+        )
+        Event.objects.create(
+            name='Archived order',
+            owner=self.user,
+            start_date=now - timedelta(days=3),
+            end_date=now - timedelta(days=2),
+        )
+        self.client.login(username='tester', password='pwd')
+
+        response = self.client.get(reverse('event_list'))
+        page = response.content.decode()
+        headings = [
+            'Utvalgte Arrangementer',
+            'Kommende Arrangementer',
+            'Arrangementer Under Vei',
+            'Avsluttede Arrangementer',
+        ]
+        positions = [page.index(heading) for heading in headings]
+
+        self.assertEqual(positions, sorted(positions))
+
+    def test_event_cards_show_scheduled_date_and_omit_missing_date(self):
+        start_date = timezone.now() + timedelta(days=14)
+        Event.objects.create(name='Scheduled event', owner=self.user, start_date=start_date)
+        Event.objects.create(name='Unscheduled event', owner=self.user)
+        self.client.login(username='tester', password='pwd')
+
+        response = self.client.get(reverse('event_list'))
+
+        self.assertContains(
+            response,
+            date_format(timezone.localtime(start_date), 'd. M Y, H:i'),
+        )
+        self.assertEqual(response.content.decode().count('class="event-card-meta"'), 1)

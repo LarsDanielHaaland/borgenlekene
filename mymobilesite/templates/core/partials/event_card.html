@@ -1,0 +1,26 @@
+<a href="{% url 'event_detail' pk=event.pk %}" class="event-card-link">
+  <article class="card event-card">
+    <div class="event-card-status event-card-status--{{ status_type }}">
+      <span class="badge bg-dark">
+        <i class="fas {{ status_icon }}{% if status_type == 'ongoing' %} event-card-status-icon--small{% endif %} me-1" aria-hidden="true"></i>{{ status_label }}
+      </span>
+    </div>
+    <div class="card-body">
+      <h4 class="event-card-title">{{ event.name }}</h4>
+      {% if event.description %}
+        <p class="event-card-description">{{ event.description }}</p>
+      {% endif %}
+      {% if event.start_date %}
+        <p class="event-card-meta">
+          <i class="fas fa-calendar me-1" aria-hidden="true"></i>
+          <time datetime="{{ event.start_date|date:'c' }}">{{ event.start_date|date:"d. M Y, H:i" }}</time>
+        </p>
+      {% endif %}
+    </div>
+    <div class="event-card-footer">
+      <span class="event-status-badge {{ status_badge_class }}">
+        <i class="fas fa-users me-1" aria-hidden="true"></i>{{ event.get_nickname_count }} deltaker{{ event.get_nickname_count|pluralize:"e" }}
+      </span>
+    </div>
+  </article>
+</a>
