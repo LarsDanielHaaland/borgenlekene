@@ -4,9 +4,8 @@ from django.contrib import messages
 from django.db import IntegrityError
 
 from ..claiming import ClaimOutcome, claim_nickname as perform_nickname_claim
-from ..models import Event, ActivityRanking, Nickname
+from ..models import ACTIVITIES, Event, ActivityRanking, Nickname
 from ..forms import EventForm, NicknameForm
-from .scoring import ACTIVITIES # Import ACTIVITIES from the sibling module
 from ..forms import InviteForm
 from ..models import Invitation
 from django.contrib.auth.decorators import login_required

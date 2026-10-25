@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from ..models import Event, Nickname, ActivityRanking
-from ..views.scoring import update_total_scores
+from ..ranking_writes import update_total_scores
 
 
 class ActivityPointsTest(TestCase):

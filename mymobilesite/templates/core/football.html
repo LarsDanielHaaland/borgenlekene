@@ -87,7 +87,7 @@
     </div>
   </div>
 
-  <div id="football-data" data-event-id="{{ event.id }}" data-activity-id="{{ activity.id }}" style="display:none;">
+  <div id="tournament-data" data-event-id="{{ event.id }}" data-activity-id="{{ activity.id }}" style="display:none;">
     {{ round_rankings.1|json_script:"round1-data" }}
     {{ round_rankings.2|json_script:"round2-data" }}
     {{ round_rankings.3|json_script:"round3-data" }}
@@ -97,5 +97,5 @@
 
 <form style="display:none;">{% csrf_token %}</form>
 <script src="{% static 'js/tournament_base.js' %}"></script>
-<script src="{% static 'js/football.js' %}"></script>
+<script src="{% static 'js/activity_tournament.js' %}"></script>
 {% endblock %}

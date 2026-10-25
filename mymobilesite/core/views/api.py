@@ -4,9 +4,13 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
 from django.db import transaction
 
-from ..ranking_writes import save_manual_order
+from ..ranking_writes import (
+    calculate_tennis_standings,
+    save_manual_order,
+    update_running_rankings,
+    update_tennis_rankings,
+)
 from ..models import Event, Nickname, RunningResult, TennisMatch
-from .scoring import update_total_scores, update_tennis_rankings, calculate_tennis_standings, update_running_rankings
 
 @require_POST
 def record_tennis_match(request, pk):
@@ -41,7 +45,6 @@ def record_tennis_match(request, pk):
 
             # Recalculate rankings and scores
             update_tennis_rankings(event)
-            update_total_scores(event)
 
         # Return success and the updated standings so the client can refresh
         standings = calculate_tennis_standings(event)
@@ -70,15 +73,13 @@ def record_running_time(request, pk):
         time_seconds = float(data['time_seconds'])
         group_id = data.get('group_id')
 
-        # Create or update the running result for this nickname
-        rr, created = RunningResult.objects.update_or_create(
-            event=event, nickname=nickname,
-            defaults={'time_seconds': time_seconds, 'group_id': group_id}
-        )
-
-        # Recalculate running rankings and total scores
-        update_running_rankings(event)
-        update_total_scores(event)
+        with transaction.atomic():
+            rr, created = RunningResult.objects.update_or_create(
+                event=event,
+                nickname=nickname,
+                defaults={'time_seconds': time_seconds, 'group_id': group_id},
+            )
+            update_running_rankings(event)
 
         return JsonResponse({'success': True, 'created': created})
     except Exception as e:
@@ -93,12 +94,9 @@ def delete_running_time(request, pk):
         data = json.loads(request.body)
         nickname = get_object_or_404(Nickname, id=data['nickname_id'], event=event)
 
-        # Delete the running result if it exists
-        RunningResult.objects.filter(event=event, nickname=nickname).delete()
-
-        # Recalculate running rankings and total scores
-        update_running_rankings(event)
-        update_total_scores(event)
+        with transaction.atomic():
+            RunningResult.objects.filter(event=event, nickname=nickname).delete()
+            update_running_rankings(event)
 
         return JsonResponse({'success': True})
     except Exception as e:

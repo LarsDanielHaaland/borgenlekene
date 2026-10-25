@@ -64,6 +64,19 @@ class ManualRankingWriteTests(TestCase):
             [(self.second.pk, 1), (self.first.pk, 2)],
         )
 
+    def test_saving_activity_order_recalculates_participant_totals(self):
+        result = save_manual_order(
+            self.event,
+            activity_id=2,
+            order=[self.second.pk, self.first.pk],
+        )
+
+        self.assertTrue(result.success)
+        self.first.refresh_from_db()
+        self.second.refresh_from_db()
+        self.assertEqual(self.first.total_score, 1)
+        self.assertEqual(self.second.total_score, 2)
+
     def test_duplicate_nickname_ids_keep_existing_rankings(self):
         result = save_manual_order(
             self.event,

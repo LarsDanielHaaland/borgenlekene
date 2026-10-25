@@ -3,6 +3,15 @@ from django.db import models
 from django.urls import reverse
 from django.conf import settings
 
+ACTIVITIES = [
+    {'id': 1, 'name': 'Tennis', 'description': 'Alle møter alle i en sveitsisk-inspirert turnering.'},
+    {'id': 4, 'name': 'Running', 'description': 'Finn en bakke og løp til toppen. Raskest tid vinner.'},
+    {'id': 2, 'name': 'Football', 'description': 'Straffesparkkonkurranse med utslagsrunder.'},
+    {'id': 3, 'name': 'Basketball', 'description': 'Ligaspill over flere runder, poengene summeres.'},
+    {'id': 5, 'name': 'Dice Game', 'description': "Terningspill basert på Liar's Dice / Perudo."},
+]
+
+
 class Event(models.Model):
     STATUS_CHOICES = [
         ('featured', 'Featured'),
@@ -76,7 +85,7 @@ class ActivityRanking(models.Model):
     """Store rankings for each activity for each participant."""
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     nickname = models.ForeignKey(Nickname, on_delete=models.CASCADE)
-    activity_id = models.IntegerField()  # 1=Tennis, 2=Football, etc.
+    activity_id = models.IntegerField()  # See ACTIVITIES for the canonical catalog.
     rank = models.IntegerField()  # 1=first place, 2=second place, etc.
     created_at = models.DateTimeField(auto_now_add=True)
 

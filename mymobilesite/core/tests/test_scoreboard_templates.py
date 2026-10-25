@@ -40,6 +40,19 @@ class SharedScoreboardTemplateTests(TestCase):
                 response = self.get_page(route_name)
                 self.assertEqual(response.content.count(b'data-scoreboard="true"'), 4)
 
+    def test_football_and_basketball_share_neutral_tournament_script(self):
+        for route_name, activity_id in (
+            ("football_tournament", 2),
+            ("basketball_tournament", 3),
+        ):
+            with self.subTest(game=route_name):
+                response = self.get_page(route_name)
+                self.assertContains(response, 'id="tournament-data"')
+                self.assertContains(response, f'data-activity-id="{activity_id}"')
+                self.assertContains(response, "activity_tournament.")
+                self.assertNotContains(response, 'id="football-data"')
+                self.assertNotContains(response, "/static/js/football.")
+
     def test_each_game_keeps_its_own_score_columns(self):
         expected_columns = {
             "tennis_tournament": ("Seire", "Tap"),

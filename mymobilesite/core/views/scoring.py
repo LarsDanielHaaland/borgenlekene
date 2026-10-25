@@ -1,93 +1,26 @@
 
-import random
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.views.decorators.http import require_POST
-from django.db import transaction, models
-from django.db.models import F
 
-from ..models import Event, Nickname, ActivityRanking, TennisMatch, RunningResult
+from ..models import ACTIVITIES, Event, ActivityRanking, TennisMatch, RunningResult
+from ..ranking_writes import (
+    calculate_tennis_standings,
+    randomize_activity_rankings,
+)
 
-# --- Scoring Logic ---
-ACTIVITIES = [
-    {'id': 1, 'name': 'Tennis', 'description': 'Alle møter alle i en sveitsisk-inspirert turnering.'},
-    {'id': 4, 'name': 'Running', 'description': 'Finn en bakke og løp til toppen. Raskest tid vinner.'},
-    {'id': 2, 'name': 'Football', 'description': 'Straffesparkkonkurranse med utslagsrunder.'},
-    {'id': 3, 'name': 'Basketball', 'description': 'Ligaspill over flere runder, poengene summeres.'},
-    {'id': 5, 'name': 'Dice Game', 'description': "Terningspill basert på Liar's Dice / Perudo."},
-]
-
-def update_total_scores(event):
-    """Recalculate total scores for all participants based on activity rankings."""
-    nicknames = event.nicknames.all()
-    total_participants = nicknames.count()
-    if total_participants == 0:
-        return
-
-
-    # Reset all scores
-    nicknames.update(total_score=0)
-
-    # Use a dictionary to aggregate points to minimize database writes
-    scores_to_add = {nickname.id: 0 for nickname in nicknames}
-
-    # Add points from each activity
-    for activity in ACTIVITIES:
-        rankings = ActivityRanking.objects.filter(event=event, activity_id=activity['id'])
-        for ranking in rankings:
-            points = total_participants - ranking.rank + 1
-            scores_to_add[ranking.nickname.id] += points
-
-    # Update scores in a single transaction
-    with transaction.atomic():
-        for nickname_id, points in scores_to_add.items():
-            Nickname.objects.filter(pk=nickname_id).update(total_score=F('total_score') + points)
-
-
-def update_running_rankings(event):
-    """Update running rankings based on recorded RunningResult times.
-
-    Lower time is better (rank 1). We write ActivityRanking entries with
-    activity_id=4.
-    """
-    results = list(RunningResult.objects.filter(event=event).select_related('nickname').order_by('time_seconds', 'nickname_id'))
-    with transaction.atomic():
-        ActivityRanking.objects.filter(event=event, activity_id=4).delete()
-        for rank, res in enumerate(results, start=1):
-            ActivityRanking.objects.create(
-                event=event,
-                nickname=res.nickname,
-                activity_id=4,
-                rank=rank
-            )
 
 @require_POST
 def score_activity(request, pk, activity_id):
     """Randomly ranks all participants for a given activity."""
     event = get_object_or_404(Event, pk=pk)
     activity_name = next((act['name'] for act in ACTIVITIES if act['id'] == int(activity_id)), "the activity")
-    # Use a deterministic ordering for participants so their positions remain
-    # static across page reloads and score updates. Order by PK (creation
-    # order) which does not change when scores/rankings are updated.
-    nicknames = list(event.nicknames.order_by('id').all())
-
-    if not nicknames:
-        messages.warning(request, "There are no participants to rank.")
-        return redirect('event_detail', pk=pk)
-
-    random.shuffle(nicknames)
 
     try:
-        with transaction.atomic():
-            ActivityRanking.objects.filter(event=event, activity_id=activity_id).delete()
-            for rank, nickname in enumerate(nicknames, 1):
-                ActivityRanking.objects.create(
-                    event=event,
-                    nickname=nickname,
-                    activity_id=activity_id,
-                    rank=rank
-                )
-            update_total_scores(event)
+        completed = randomize_activity_rankings(event, activity_id)
+        if not completed:
+            messages.warning(request, "There are no participants to rank.")
+            return redirect('event_detail', pk=pk)
         messages.success(request, f"Successfully randomized rankings for {activity_name}!")
     except Exception as e:
         messages.error(request, f"An error occurred while ranking: {e}")
@@ -96,38 +29,6 @@ def score_activity(request, pk, activity_id):
 
 
 # --- Tennis Specific Views ---
-
-def calculate_tennis_standings(event):
-    """Calculate tennis tournament standings based on wins."""
-    standings = []
-    for nickname in event.nicknames.all():
-        wins = TennisMatch.objects.filter(event=event, winner=nickname).count()
-        total_matches = TennisMatch.objects.filter(
-            event=event
-        ).filter(
-            models.Q(player1=nickname) | models.Q(player2=nickname)
-        ).count()
-        standings.append({
-            'nickname': nickname,
-            'wins': wins,
-            'losses': total_matches - wins,
-            'total_matches': total_matches
-        })
-    standings.sort(key=lambda x: (-x['wins'], x['losses']))
-    return standings
-
-def update_tennis_rankings(event):
-    """Update tennis rankings based on current standings."""
-    standings = calculate_tennis_standings(event)
-    with transaction.atomic():
-        ActivityRanking.objects.filter(event=event, activity_id=1).delete()
-        for rank, standing in enumerate(standings, 1):
-            ActivityRanking.objects.create(
-                event=event,
-                nickname=standing['nickname'],
-                activity_id=1,
-                rank=rank
-            )
 
 def generate_balanced_round_robin(nicknames):
     """

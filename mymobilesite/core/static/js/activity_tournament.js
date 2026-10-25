@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
-  const eventDiv = document.getElementById('football-data');
-  if (!eventDiv) return;
-  const activityId = parseInt(eventDiv.getAttribute('data-activity-id'), 10);
+  const tournamentData = document.getElementById('tournament-data');
+  if (!tournamentData) return;
+  const activityId = parseInt(tournamentData.getAttribute('data-activity-id'), 10);
 
   // Helper to read saved rankings from the hidden inputs (they use json_script)
   function readSaved(id) {
