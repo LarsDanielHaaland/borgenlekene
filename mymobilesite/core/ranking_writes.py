@@ -27,6 +27,8 @@ def save_manual_order(event: Event, activity_id, order, round_num=None) -> Ranki
 
     if not isinstance(order, list):
         return RankingWriteResult(False, "Order must be a list")
+    if not order:
+        return RankingWriteResult(False, "Order must include at least one nickname")
 
     normalized_order = []
     for nickname_id in order:

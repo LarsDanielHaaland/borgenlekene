@@ -28,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let timers = {}; // nickname_id -> start timestamp
   let recorded = {}; // nickname_id -> time_seconds
   let clockInterval = null;
-  let manualOrder = null; // array of nickname ids representing user ordering for ties
 
   function formatSeconds(ms) {
     // return total seconds (integer)
@@ -42,8 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function recalcStandings() {
-    // Reset any previously computed manual order when rebuilding standings
-    manualOrder = null;
     // Build an array of results from recorded times or existing time spans.
     const rows = [];
     participantList.querySelectorAll('li.list-group-item').forEach(item => {
@@ -86,11 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }));
     Scoreboard.renderRows(standingsTable, scoreboardRows, standingsColumns);
-    Scoreboard.attachMoveControls(standingsTable, {
+    Scoreboard.attachDragAndDrop(standingsTable, {
       movement: 'ties',
-      onMove: () => {
-        manualOrder = Scoreboard.getOrder(standingsTable);
-      }
+      saveOrder: (table, order) => saveManualOrder(4, table, null, order)
     });
   }
 
@@ -352,16 +347,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const data = await resp.json();
         if (!data.success) throw new Error(data.error || 'Save failed');
-      }
-      // If user reordered tied rows, persist manual ordering for running (activity_id=4)
-      if (manualOrder && manualOrder.length > 0) {
-        const resp2 = await fetch(`${window.location.pathname}api/set_manual_order/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-          body: JSON.stringify({ activity_id: 4, order: manualOrder })
-        });
-        const data2 = await resp2.json();
-        if (!data2.success) throw new Error(data2.error || 'Failed to persist manual order');
       }
       statusEl.textContent = 'Saved.';
       // After saving, reload standings from server by reloading page or by

@@ -13,6 +13,238 @@
     return value !== undefined && value !== '' && value === neighbor.dataset.tieValue;
   }
 
+  function updateDraggableRows(table, movement){
+    const rows = tableRows(table);
+    rows.forEach(row => {
+      const canDrag = rows.length > 1 && (
+        movement !== 'ties'
+        || rows.some(neighbor => neighbor !== row && canMove(row, neighbor, movement))
+      );
+      row.classList.toggle('scoreboard-row-draggable', canDrag);
+    });
+  }
+
+  function ordersEqual(first, second){
+    return first.length === second.length && first.every((id, index) => id === second[index]);
+  }
+
+  function isCompleteOrder(table, order){
+    const rowCount = tableRows(table).length;
+    return rowCount > 0
+      && order.length === rowCount
+      && order.every(Number.isInteger)
+      && new Set(order).size === rowCount;
+  }
+
+  function setSaveStatus(table, status, message){
+    const element = table.closest('.scoreboard-wrapper')?.querySelector('[data-scoreboard-save-status]');
+    if(!element) return;
+    element.textContent = message;
+    element.className = `scoreboard-save-status scoreboard-save-status--${status}`;
+  }
+
+  function restoreOrder(table, order){
+    const tbody = table.querySelector('tbody');
+    const rows = new Map(tableRows(table).map(row => [getRowId(row), row]));
+    order.forEach(id => {
+      const row = rows.get(id);
+      if(row) tbody.appendChild(row);
+    });
+    Scoreboard.updateRanks(table);
+  }
+
+  function clearInvalidTarget(state){
+    if(state.invalidTarget) state.invalidTarget.classList.remove('scoreboard-drop-invalid');
+    state.invalidTarget = null;
+  }
+
+  function setInvalidTarget(state, row){
+    clearInvalidTarget(state);
+    if(row) row.classList.add('scoreboard-drop-invalid');
+    state.invalidTarget = row || null;
+  }
+
+  function moveRowToPointer(state, clientX, clientY){
+    const { table, row, movement } = state;
+    const tableRect = table.getBoundingClientRect();
+    if(clientX < tableRect.left || clientX > tableRect.right) {
+      state.invalidDrop = true;
+      setInvalidTarget(state, null);
+      return;
+    }
+
+    const candidates = tableRows(table).filter(candidate => candidate !== row && canMove(row, candidate, movement));
+    if(!candidates.length) return;
+    const target = candidates.reduce((closest, candidate) => {
+      const rect = candidate.getBoundingClientRect();
+      const distance = Math.abs(clientY - (rect.top + rect.height / 2));
+      return !closest || distance < closest.distance
+        ? { row: candidate, rect, distance }
+        : closest;
+    }, null);
+
+    state.invalidDrop = false;
+    setInvalidTarget(state, null);
+    const afterTarget = clientY > target.rect.top + target.rect.height / 2;
+    const reference = afterTarget ? target.row.nextElementSibling : target.row;
+    if(reference !== row) table.querySelector('tbody').insertBefore(row, reference);
+    state.changed = !ordersEqual(state.startOrder, Scoreboard.getOrder(table));
+  }
+
+  function autoScroll(state){
+    if(!state.dragging || state.autoScrollFrame) return;
+    const edgeSize = 56;
+    const maxStep = 12;
+    const tick = () => {
+      if(!state.dragging) {
+        state.autoScrollFrame = null;
+        return;
+      }
+
+      const y = state.lastY;
+      const height = window.innerHeight;
+      let step = 0;
+      if(y < edgeSize) step = -Math.min(maxStep, Math.ceil((edgeSize - y) / 5));
+      else if(y > height - edgeSize) step = Math.min(maxStep, Math.ceil((y - height + edgeSize) / 5));
+      if(step) {
+        const previousScrollY = window.scrollY;
+        window.scrollBy(0, step);
+        if(window.scrollY === previousScrollY) {
+          state.autoScrollFrame = null;
+          return;
+        }
+        moveRowToPointer(state, state.lastX, state.lastY);
+        state.autoScrollFrame = window.requestAnimationFrame(tick);
+      } else {
+        state.autoScrollFrame = null;
+      }
+    };
+    state.autoScrollFrame = window.requestAnimationFrame(tick);
+  }
+
+  function saveCurrentOrder(table, state, force=false){
+    if(typeof state.options.saveOrder !== 'function') return;
+    const order = Scoreboard.getOrder(table);
+    if(!isCompleteOrder(table, order)) {
+      state.pendingOrder = null;
+      restoreOrder(table, state.lastSavedOrder);
+      if(typeof state.options.onMove === 'function') state.options.onMove(table);
+      setSaveStatus(table, 'error', 'Kunne ikke lagre rekkefølgen.');
+      Tournament.showNotification('Kunne ikke lagre rekkefølgen.', 'error');
+      return;
+    }
+
+    if(state.saving) {
+      state.pendingOrder = !force && ordersEqual(order, state.inFlightOrder) ? null : order;
+      return;
+    }
+    if(!force && ordersEqual(order, state.lastSavedOrder)) {
+      setSaveStatus(table, 'saved', 'Lagret');
+      return;
+    }
+
+    state.pendingOrder = order;
+    flushSaveQueue(table, state);
+  }
+
+  async function flushSaveQueue(table, state){
+    if(state.saving || !state.pendingOrder) return;
+    const order = state.pendingOrder;
+    state.pendingOrder = null;
+    state.saving = true;
+    state.inFlightOrder = order;
+    setSaveStatus(table, 'saving', 'Lagrer…');
+
+    let result;
+    try {
+      result = await state.options.saveOrder(table, order);
+    } catch(error) {
+      result = { success: false, error: String(error) };
+    }
+    state.saving = false;
+    state.inFlightOrder = null;
+
+    if(!result || result.success !== true) {
+      state.pendingOrder = null;
+      restoreOrder(table, state.lastSavedOrder);
+      if(typeof state.options.onMove === 'function') state.options.onMove(table);
+      setSaveStatus(table, 'error', 'Lagring mislyktes.');
+      Tournament.showNotification(
+        `Kunne ikke lagre rekkefølgen: ${result?.error || 'Ukjent feil'}`,
+        'error'
+      );
+      return;
+    }
+
+    state.lastSavedOrder = order;
+    if(state.pendingOrder && ordersEqual(state.pendingOrder, state.lastSavedOrder)) {
+      state.pendingOrder = null;
+    }
+    if(state.pendingOrder) {
+      flushSaveQueue(table, state);
+      return;
+    }
+    setSaveStatus(table, 'saved', 'Lagret');
+  }
+
+  function finishDrag(state, cancelled=false){
+    const { table, row } = state;
+    window.clearTimeout(state.longPressTimer);
+    if(!state.dragging) {
+      state.pendingRow = null;
+      return;
+    }
+
+    if(cancelled || state.invalidDrop) {
+      restoreOrder(table, state.startOrder);
+      if(typeof state.options.onMove === 'function') state.options.onMove(table);
+    } else if(state.changed) {
+      Scoreboard.updateRanks(table);
+      if(typeof state.options.onMove === 'function') state.options.onMove(table);
+      saveCurrentOrder(table, state);
+    }
+
+    clearInvalidTarget(state);
+    row.classList.remove('scoreboard-row-dragging');
+    table.classList.remove('scoreboard-dragging');
+    document.body.classList.remove('scoreboard-drag-active');
+    if(state.preventTouchScroll) {
+      table.removeEventListener('touchmove', state.preventTouchScroll);
+      state.preventTouchScroll = null;
+    }
+    state.dragging = false;
+    state.pendingRow = null;
+    state.row = null;
+    state.changed = false;
+    state.invalidDrop = false;
+    if(state.autoScrollFrame) {
+      window.cancelAnimationFrame(state.autoScrollFrame);
+      state.autoScrollFrame = null;
+    }
+  }
+
+  function beginDrag(state){
+    if(!state.pendingRow || state.dragging) return;
+    state.dragging = true;
+    state.row = state.pendingRow;
+    state.startOrder = Scoreboard.getOrder(state.table);
+    state.changed = false;
+    state.invalidDrop = false;
+    state.lastX = state.startX;
+    state.lastY = state.startY;
+    state.row.classList.add('scoreboard-row-dragging');
+    state.table.classList.add('scoreboard-dragging');
+    document.body.classList.add('scoreboard-drag-active');
+    if(state.pointerType === 'touch') {
+      if(typeof navigator.vibrate === 'function') navigator.vibrate(10);
+      state.preventTouchScroll = touchEvent => {
+        if(touchEvent.cancelable) touchEvent.preventDefault();
+      };
+      state.table.addEventListener('touchmove', state.preventTouchScroll, { passive: false });
+    }
+    autoScroll(state);
+  }
+
   Scoreboard.getOrder = function(table){
     return tableRows(table).map(row => getRowId(row));
   };
@@ -51,68 +283,103 @@
         tr.appendChild(cell);
       });
 
-      const controls = document.createElement('td');
-      controls.className = 'order-controls';
-      tr.appendChild(controls);
       tbody.appendChild(tr);
     });
     Scoreboard.updateRanks(table);
+    setSaveStatus(table, 'idle', '');
+    const state = table._scoreboardDragState;
+    if(state) {
+      const currentOrder = Scoreboard.getOrder(table);
+      state.lastSavedOrder = currentOrder;
+      state.pendingOrder = state.saving && isCompleteOrder(table, currentOrder)
+        ? currentOrder
+        : null;
+    }
   };
 
-  Scoreboard.refreshControls = function(table, movement){
-    const rows = tableRows(table);
-    rows.forEach((row, index) => {
-      const cell = row.querySelector('.order-controls');
-      if(!cell) return;
-      cell.replaceChildren();
-
-      const previous = rows[index - 1];
-      if(previous && canMove(row, previous, movement)) {
-        const up = document.createElement('button');
-        up.type = 'button';
-        up.className = 'btn btn-sm btn-link move-up';
-        up.textContent = '\u25b2';
-        up.title = 'Flytt opp';
-        up.setAttribute('aria-label', 'Flytt opp');
-        cell.appendChild(up);
-      }
-
-      const next = rows[index + 1];
-      if(next && canMove(row, next, movement)) {
-        const down = document.createElement('button');
-        down.type = 'button';
-        down.className = 'btn btn-sm btn-link move-down';
-        down.textContent = '\u25bc';
-        down.title = 'Flytt ned';
-        down.setAttribute('aria-label', 'Flytt ned');
-        cell.appendChild(down);
-      }
-    });
-  };
-
-  Scoreboard.attachMoveControls = function(table, options){
+  Scoreboard.attachDragAndDrop = function(table, options){
     if(!table) return;
     if(typeof options === 'function') options = { onMove: options };
     options = options || {};
-    const movement = options.movement || table.dataset.movePolicy || 'free';
-    Scoreboard.refreshControls(table, movement);
-    if(table._scoreboardMoveHandler) table.removeEventListener('click', table._scoreboardMoveHandler);
-    table._scoreboardMoveHandler = event => {
-      const up = event.target.closest('.move-up');
-      const down = event.target.closest('.move-down');
-      if(!up && !down) return;
-      const row = event.target.closest('tr');
-      if(!row || !table.contains(row)) return;
-      const neighbor = up ? row.previousElementSibling : row.nextElementSibling;
-      if(!neighbor || !canMove(row, neighbor, movement)) return;
-      if(up) neighbor.parentNode.insertBefore(row, neighbor);
-      else neighbor.parentNode.insertBefore(neighbor, row);
+    let state = table._scoreboardDragState;
+    if(!state) {
+      state = {
+        table,
+        options,
+        movement: options.movement || table.dataset.movePolicy || 'free',
+        lastSavedOrder: Scoreboard.getOrder(table),
+        pendingOrder: null,
+        saving: false,
+        inFlightOrder: null,
+        pendingRow: null,
+        dragging: false,
+      };
+      table._scoreboardDragState = state;
+    } else {
+      state.options = options;
+      state.movement = options.movement || table.dataset.movePolicy || 'free';
+    }
+    updateDraggableRows(table, state.movement);
+    if(state.dragEventsAttached) return;
 
-      Scoreboard.updateRanks(table);
-      Scoreboard.refreshControls(table, movement);
-      if(typeof options.onMove === 'function') options.onMove(table);
+    const start = event => {
+      const row = event.target.closest('tbody tr');
+      if(!row || !table.contains(row) || !row.classList.contains('scoreboard-row-draggable')
+        || event.target.closest('a, button, input, select, textarea, [contenteditable="true"]')
+        || (event.pointerType !== 'touch' && event.button !== 0)) return;
+
+      window.clearTimeout(state.longPressTimer);
+      state.pendingRow = row;
+      state.pointerId = event.pointerId;
+      state.pointerType = event.pointerType;
+      state.startX = event.clientX;
+      state.startY = event.clientY;
+      state.dragging = false;
+      table.setPointerCapture(event.pointerId);
+
+      if(event.pointerType === 'touch') {
+        state.longPressTimer = window.setTimeout(() => beginDrag(state), 250);
+      }
     };
-    table.addEventListener('click', table._scoreboardMoveHandler);
+
+    const move = event => {
+      if(event.pointerId !== state.pointerId || !state.pendingRow) return;
+      const distance = Math.hypot(event.clientX - state.startX, event.clientY - state.startY);
+      if(!state.dragging && state.pointerType === 'touch') {
+        if(distance > 10) {
+          window.clearTimeout(state.longPressTimer);
+          state.pendingRow = null;
+        }
+        return;
+      }
+      if(!state.dragging) {
+        if(distance < 3) return;
+        beginDrag(state);
+      }
+      event.preventDefault();
+      state.lastX = event.clientX;
+      state.lastY = event.clientY;
+      moveRowToPointer(state, event.clientX, event.clientY);
+      autoScroll(state);
+    };
+
+    const end = event => {
+      if(event.pointerId !== state.pointerId) return;
+      finishDrag(state);
+      state.pointerId = null;
+    };
+
+    const cancel = event => {
+      if(event.pointerId !== state.pointerId) return;
+      finishDrag(state, true);
+      state.pointerId = null;
+    };
+
+    table.addEventListener('pointerdown', start);
+    table.addEventListener('pointermove', move, { passive: false });
+    table.addEventListener('pointerup', end);
+    table.addEventListener('pointercancel', cancel);
+    state.dragEventsAttached = true;
   };
 
   window.Scoreboard = Scoreboard;
@@ -150,8 +417,9 @@
     setTimeout(()=>{ el.style.transition='opacity 0.3s'; el.style.opacity='0'; setTimeout(()=>el.remove(),300); }, 3000);
   };
 
-  Tournament.attachMoveControls = function(table, onMove){
-    Scoreboard.attachMoveControls(table, { onMove });
+  Scoreboard.saveCurrentOrder = function(table, force=false){
+    const state = table?._scoreboardDragState;
+    if(state) saveCurrentOrder(table, state, force);
   };
 
   Tournament.updateRoundScores = function(table){
@@ -185,14 +453,20 @@
     return Array.from(table.querySelectorAll('tbody tr')).map(r => getRowId(r));
   };
 
-  Tournament.saveManualOrder = async function(activityId, table, roundNum){
-    const ids = Tournament.getOrderFromTable(table);
+  Tournament.saveManualOrder = async function(activityId, table, roundNum, orderOverride){
+    const ids = orderOverride || Tournament.getOrderFromTable(table);
+    if(!isCompleteOrder(table, ids)) {
+      return { success: false, error: 'Order must include every participant exactly once.' };
+    }
     const payload = { activity_id: Number(activityId), order: ids };
     if(roundNum) payload.round = roundNum;
     const path = `${window.location.pathname}api/set_manual_order/`;
     try{
       const resp = await fetch(path, { method: 'POST', headers: {'Content-Type':'application/json','X-CSRFToken':Tournament.getCookie('csrftoken')}, body: JSON.stringify(payload) });
       const data = await resp.json();
+      if(!resp.ok || data.success !== true) {
+        return { success: false, error: data.error || `Request failed (${resp.status})` };
+      }
       return data;
     }catch(err){
       return { success: false, error: String(err) };
@@ -249,25 +523,13 @@
     return pointsMap;
   };
 
-  // Attach final tie-only controls for swapping adjacent equal-total rows.
-  Tournament.attachFinalControls = function(finalTable, pointsMap){
+  Tournament.attachFinalDragAndDrop = function(finalTable, pointsMap, options){
     if(!finalTable) return;
     Array.from(finalTable.querySelectorAll('tbody tr')).forEach(row => {
       const points = pointsMap[getRowId(row)];
       if(points) row.dataset.tieValue = points.total;
     });
-    Scoreboard.attachMoveControls(finalTable, { movement: 'ties' });
-  };
-
-  Tournament.updateFinalControlsVisibility = function(finalTable, pointsMap){
-    if(!finalTable) return;
-    if(pointsMap){
-      Array.from(finalTable.querySelectorAll('tbody tr')).forEach(row => {
-        const points = pointsMap[getRowId(row)];
-        if(points) row.dataset.tieValue = points.total;
-      });
-    }
-    Scoreboard.refreshControls(finalTable, 'ties');
+    Scoreboard.attachDragAndDrop(finalTable, { ...options, movement: 'ties' });
   };
 
   Tournament.Scoreboard = Scoreboard;
@@ -277,13 +539,11 @@
   window.Scoreboard = Scoreboard;
   window.getCookie = Tournament.getCookie;
   window.showNotification = Tournament.showNotification;
-  window.attachMoveControls = Tournament.attachMoveControls;
   window.applySavedOrder = Tournament.applySavedOrder;
   window.updateRoundScores = Tournament.updateRoundScores;
   window.getOrderFromTable = Tournament.getOrderFromTable;
   window.saveManualOrder = Tournament.saveManualOrder;
   window.computeFinalOrderShared = Tournament.computeFinalOrder;
-  window.attachFinalControlsShared = Tournament.attachFinalControls;
-  window.updateFinalControlsVisibilityShared = Tournament.updateFinalControlsVisibility;
+  window.attachFinalDragAndDropShared = Tournament.attachFinalDragAndDrop;
 
 })(window);

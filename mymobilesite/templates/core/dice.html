@@ -36,8 +36,6 @@
   <h3>Sluttresultat</h3>
   {% include "core/partials/scoreboard.html" with scoreboard=scoreboard %}
 
-  <button class="btn btn-primary" id="save-final">Lagre Sluttresultat</button>
-
   <div id="dice-data" data-event-id="{{ event.id }}" data-activity-id="{{ activity.id }}" style="display:none;">
     {{ final_ranking|json_script:"final-data" }}
   </div>

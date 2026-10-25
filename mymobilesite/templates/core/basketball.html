@@ -48,9 +48,6 @@
         <div style="margin-bottom: 1.5rem;">
           {% include "core/partials/scoreboard.html" with scoreboard=round_scoreboards.0 %}
         </div>
-        <button class="btn btn-success w-100" id="save-round-1">
-          <i class="fas fa-save me-2"></i>Lagre Runde 1
-        </button>
       </div>
 
       <!-- ROUND 2 -->
@@ -61,9 +58,6 @@
         <div style="margin-bottom: 1.5rem;">
           {% include "core/partials/scoreboard.html" with scoreboard=round_scoreboards.1 %}
         </div>
-        <button class="btn btn-success w-100" id="save-round-2">
-          <i class="fas fa-save me-2"></i>Lagre Runde 2
-        </button>
       </div>
 
       <!-- ROUND 3 -->
@@ -74,9 +68,6 @@
         <div style="margin-bottom: 1.5rem;">
           {% include "core/partials/scoreboard.html" with scoreboard=round_scoreboards.2 %}
         </div>
-        <button class="btn btn-success w-100" id="save-round-3">
-          <i class="fas fa-save me-2"></i>Lagre Runde 3
-        </button>
       </div>
     </div>
 
@@ -88,12 +79,9 @@
       <div style="margin-bottom: 2rem;">
         {% include "core/partials/scoreboard.html" with scoreboard=final_scoreboard %}
       </div>
-      <div style="display: flex; gap: 1rem; justify-content: center;">
+      <div style="display: flex; justify-content: center;">
         <button class="btn btn-primary" id="compute-final">
           <i class="fas fa-calculator me-2"></i>Beregn Sluttresultat
-        </button>
-        <button class="btn btn-success" id="save-final">
-          <i class="fas fa-save me-2"></i>Lagre Resultater
         </button>
       </div>
     </div>
@@ -107,6 +95,7 @@
   </div>
 </div>
 
+<form style="display:none;">{% csrf_token %}</form>
 <script src="{% static 'js/tournament_base.js' %}"></script>
 <script src="{% static 'js/football.js' %}"></script>
 {% endblock %}

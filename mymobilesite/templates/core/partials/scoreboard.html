@@ -8,7 +8,6 @@
         {% for column in scoreboard.columns %}
           <th{% if column.mobile_hide %} class="scoreboard-mobile-secondary"{% endif %}>{{ column.label }}</th>
         {% endfor %}
-        <th>Kontroller</th>
       </tr>
     </thead>
     <tbody>
@@ -19,9 +18,9 @@
           {% for column in scoreboard.columns %}
             <td class="{{ column.cell_class }}{% if column.emphasize %} scoreboard-emphasis{% endif %}{% if column.mobile_hide %} scoreboard-mobile-secondary{% endif %}">{{ row.metrics|get_item:column.key|default:"-" }}</td>
           {% endfor %}
-          <td class="order-controls" aria-label="Kontroller for {{ row.name }}"></td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
+  <div class="scoreboard-save-status" data-scoreboard-save-status role="status" aria-live="polite" aria-atomic="true"></div>
 </div>

@@ -30,6 +30,9 @@ class SharedScoreboardTemplateTests(TestCase):
                 self.assertContains(response, 'data-scoreboard="true"')
                 self.assertContains(response, "Plass")
                 self.assertContains(response, "Spiller")
+                self.assertContains(response, "data-scoreboard-save-status")
+                self.assertNotContains(response, 'class="order-controls"')
+                self.assertNotContains(response, "<th>Kontroller</th>")
 
     def test_tournament_pages_share_scoreboards_for_rounds_and_final(self):
         for route_name in ("football_tournament", "basketball_tournament"):
@@ -73,6 +76,33 @@ class SharedScoreboardTemplateTests(TestCase):
                     free_tables,
                 )
                 self.assertContains(response, f"--scoreboard-accent: {accent}")
+
+    def test_order_only_save_buttons_are_removed_and_result_buttons_remain(self):
+        for route_name in ("football_tournament", "basketball_tournament"):
+            with self.subTest(game=route_name):
+                response = self.get_page(route_name)
+                self.assertNotContains(response, 'id="save-round-1"')
+                self.assertNotContains(response, 'id="save-round-2"')
+                self.assertNotContains(response, 'id="save-round-3"')
+                self.assertNotContains(response, 'id="save-final"')
+                self.assertContains(response, 'id="compute-final"')
+
+        dice_response = self.get_page("dice_tournament")
+        self.assertNotContains(dice_response, 'id="save-final"')
+
+        tennis_response = self.get_page("tennis_tournament")
+        self.assertNotContains(tennis_response, 'id="save-tiebreaks-btn"')
+        self.assertContains(tennis_response, 'id="save-results-btn"')
+
+        running_response = self.get_page("running_page")
+        self.assertContains(running_response, 'id="save-running-btn"')
+
+    def test_football_and_basketball_pages_provide_csrf_tokens_for_autosave(self):
+        for route_name in ("football_tournament", "basketball_tournament"):
+            with self.subTest(game=route_name):
+                response = self.get_page(route_name)
+                self.assertContains(response, 'name="csrfmiddlewaretoken"')
+                self.assertIn("csrftoken", response.cookies)
 
     def test_event_create_and_portal_use_responsive_layout_classes(self):
         event_response = self.get_page("event_detail")

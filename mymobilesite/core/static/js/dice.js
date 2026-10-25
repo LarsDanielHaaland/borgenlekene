@@ -4,14 +4,9 @@
   function $all(s, root=document){ return Array.from(root.querySelectorAll(s)); }
 
   const finalTable = $('#final-standing');
-  const saveBtn = $('#save-final');
   const finalData = JSON.parse(document.getElementById('final-data').textContent || '[]');
   const eventDiv = document.getElementById('dice-data');
   const ACTIVITY_ID = eventDiv.dataset.activityId;
-
-  function attachRowControls(table){
-    Scoreboard.attachMoveControls(table, { movement: 'free' });
-  }
 
   function applySavedFinal(){
     if(finalData && finalData.length){
@@ -25,20 +20,11 @@
     }
   }
 
-  function getOrder(){ return $all('tbody tr', finalTable).map(r => parseInt(r.dataset.nicknameId, 10)); }
-
-  function postOrder(order){
-    // use shared saveManualOrder helper
-    return saveManualOrder(ACTIVITY_ID, finalTable, null);
-  }
-
-  // use shared showNotification
-
   document.addEventListener('DOMContentLoaded', function(){
     applySavedFinal();
-    attachRowControls(finalTable);
-    saveBtn.addEventListener('click', function(){
-      postOrder(getOrder()).then(data => { if(data.success) showNotification('Saved','success'); else showNotification('Save failed: ' + (data.error||JSON.stringify(data)),'error'); }).catch(e=>showNotification('Network error: '+e,'error'));
+    Scoreboard.attachDragAndDrop(finalTable, {
+      movement: 'free',
+      saveOrder: (table, order) => saveManualOrder(ACTIVITY_ID, table, null, order)
     });
   });
 })();

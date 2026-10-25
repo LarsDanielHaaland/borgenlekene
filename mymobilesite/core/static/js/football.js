@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
   const eventDiv = document.getElementById('football-data');
   if (!eventDiv) return;
-  const eventId = eventDiv.getAttribute('data-event-id');
   const activityId = parseInt(eventDiv.getAttribute('data-activity-id'), 10);
 
   // Helper to read saved rankings from the hidden inputs (they use json_script)
@@ -30,11 +29,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const round3Table = document.getElementById('round3-table');
   const finalTable = document.getElementById('final-standing');
 
-  // attach generic move controls for rounds using shared helper
-  [round1Table, round2Table, round3Table].forEach(t => attachMoveControls(t, () => updateRoundScores(t)));
-
-  // Final controls and visibility will be handled by shared helpers
-
   // Pre-fill saved orders using shared helper
   applySavedOrder(round1Table, savedRound1);
   applySavedOrder(round2Table, savedRound2);
@@ -45,32 +39,20 @@ document.addEventListener('DOMContentLoaded', function() {
   [round1Table, round2Table, round3Table].forEach(t => updateRoundScores(t));
   // Compute and populate final totals using shared compute and attach final controls
   currentPointsMap = computeFinalOrderShared([round1Table, round2Table, round3Table], finalTable);
-  attachFinalControlsShared(finalTable, currentPointsMap);
+  const roundTables = [round1Table, round2Table, round3Table];
+  roundTables.forEach((table, index) => {
+    const roundNum = index + 1;
+    Scoreboard.attachDragAndDrop(table, {
+      onMove: updateRoundScores,
+      saveOrder: (currentTable, order) => saveManualOrder(activityId, currentTable, roundNum, order)
+    });
+  });
+  const saveFinalOrder = (table, order) => saveManualOrder(activityId, table, null, order);
+  attachFinalDragAndDropShared(finalTable, currentPointsMap, { saveOrder: saveFinalOrder });
 
-  // No elimination UI: rounds are reordered manually with arrows only.
-
-  // computeFinalOrderShared is used for computing and ordering final table
-
-  document.getElementById('compute-final').addEventListener('click', (e) => {
+  document.getElementById('compute-final').addEventListener('click', () => {
     currentPointsMap = computeFinalOrderShared([round1Table, round2Table, round3Table], finalTable);
-    attachFinalControlsShared(finalTable, currentPointsMap);
+    attachFinalDragAndDropShared(finalTable, currentPointsMap, { saveOrder: saveFinalOrder });
+    Scoreboard.saveCurrentOrder(finalTable, true);
   });
-
-  // Save handlers: use shared saveManualOrder and showNotification
-  document.getElementById('save-round-1').addEventListener('click', () => {
-    saveManualOrder(activityId, round1Table, 1).then(data => { if(data.success) showNotification('Saved', 'success'); else showNotification('Save failed: ' + (data.error||JSON.stringify(data)), 'error'); }).catch(e => showNotification('Network error: ' + e, 'error'));
-  });
-
-  document.getElementById('save-round-2').addEventListener('click', () => {
-    saveManualOrder(activityId, round2Table, 2).then(data => { if(data.success) showNotification('Saved', 'success'); else showNotification('Save failed: ' + (data.error||JSON.stringify(data)), 'error'); }).catch(e => showNotification('Network error: ' + e, 'error'));
-  });
-
-  document.getElementById('save-round-3').addEventListener('click', () => {
-    saveManualOrder(activityId, round3Table, 3).then(data => { if(data.success) showNotification('Saved', 'success'); else showNotification('Save failed: ' + (data.error||JSON.stringify(data)), 'error'); }).catch(e => showNotification('Network error: ' + e, 'error'));
-  });
-
-  document.getElementById('save-final').addEventListener('click', () => {
-    saveManualOrder(activityId, finalTable, null).then(data => { if(data.success) showNotification('Saved', 'success'); else showNotification('Save failed: ' + (data.error||JSON.stringify(data)), 'error'); }).catch(e => showNotification('Network error: ' + e, 'error'));
-  });
-
 });

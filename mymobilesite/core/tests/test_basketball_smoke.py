@@ -1,5 +1,6 @@
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.contrib.auth import get_user_model
 import json
 
 from core.models import Event, Nickname, ActivityRanking
@@ -7,9 +8,14 @@ from core.models import Event, Nickname, ActivityRanking
 class BasketballSmokeTest(TestCase):
     def setUp(self):
         self.client = Client()
-        self.event = Event.objects.create(name='SmokeTest Basketball Event')
+        self.owner = get_user_model().objects.create_user(
+            username='basketball-event-owner',
+            password='test-password',
+        )
+        self.event = Event.objects.create(name='SmokeTest Basketball Event', owner=self.owner)
         # create 4 participants
         self.nicknames = [Nickname.objects.create(event=self.event, name=f'P{i}') for i in range(1,5)]
+        self.client.force_login(self.owner)
 
     def test_save_final_order_creates_rankings_and_updates_scores(self):
         # Post a final order to the basketball-prefixed API path

@@ -11,47 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
       { key: 'wins', cellClass: 'wins-cell', emphasize: true },
       { key: 'losses', cellClass: 'losses-cell' }
     ];
-    Scoreboard.attachMoveControls(finalTable, { movement: 'ties' });
-  
-    // Save tiebreaks button: save the current standings order for tiebreak resolution
-    const saveTiebreaksBtn = document.getElementById('save-tiebreaks-btn');
-    if (saveTiebreaksBtn) {
-      saveTiebreaksBtn.addEventListener('click', async () => {
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
-        const statusEl = document.getElementById('tiebreaks-status');
-        if (!csrfToken) {
-          if (statusEl) statusEl.textContent = 'CSRF token not found; cannot save tiebreaks.';
-          return;
-        }
-        const finalTable = document.getElementById('final-standing');
-        const tbody = finalTable ? finalTable.querySelector('tbody') : document.getElementById('standings-body');
-        if (!tbody) {
-          if (statusEl) statusEl.textContent = 'Standings table not found.';
-          return;
-        }
-        const order = Array.from(tbody.querySelectorAll('tr')).map(r => parseInt(r.getAttribute('data-nickname-id'), 10));
-        if (!order.length) {
-          if (statusEl) statusEl.textContent = 'No standings to save.';
-          return;
-        }
-        try {
-          const response = await fetch(`${window.location.pathname}api/set_manual_order/`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
-            body: JSON.stringify({ activity_id: 1, order: order })
-          });
-          const data = await response.json();
-          if (data.success) {
-            if (statusEl) statusEl.textContent = 'Tiebreaks lagret!';
-          } else {
-            if (statusEl) statusEl.textContent = 'Error: ' + (data.error || 'Unknown error');
-          }
-        } catch (err) {
-          console.error('Error saving tiebreaks:', err);
-          if (statusEl) statusEl.textContent = 'Network error: ' + err;
-        }
-      });
-    }
+    Scoreboard.attachDragAndDrop(finalTable, {
+      movement: 'ties',
+      saveOrder: (table, order) => saveManualOrder(1, table, null, order)
+    });
   
     // Read the URL from the data attribute
     const recordMatchUrl = tournamentData.dataset.recordMatchUrl;
@@ -192,9 +155,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 tieValue: standing.wins,
                 metrics: { wins: standing.wins, losses: standing.losses }
               })), standingsColumns);
-              Scoreboard.attachMoveControls(finalTable, { movement: 'ties' });
+              Scoreboard.attachDragAndDrop(finalTable, {
+                movement: 'ties',
+                saveOrder: (table, order) => saveManualOrder(1, table, null, order)
+              });
             }
-            if (statusEl) statusEl.textContent = 'Kampresultater lagret. Lagre Tiebreaks for å lagre rekkefølgen.';
+            if (statusEl) statusEl.textContent = 'Kampresultater lagret.';
           } else {
             if (statusEl) statusEl.textContent = 'Results saved. Refresh the page to see updated standings.';
           }
