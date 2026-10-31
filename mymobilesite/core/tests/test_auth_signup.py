@@ -56,3 +56,23 @@ class SignupTests(TestCase):
             'password': 'SuperSecretPass123',
         })
         self.assertEqual(resp.status_code, 302)
+
+    def test_logout_page_uses_post_form_and_post_logs_user_out(self):
+        user = User.objects.create_user(username='logoutuser', password='SuperSecretPass123')
+        self.client.force_login(user)
+
+        page = self.client.get('/accounts/logout/')
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, 'action="/accounts/logout/"')
+        self.assertContains(page, 'name="csrfmiddlewaretoken"')
+
+        response = self.client.post('/accounts/logout/')
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn('_auth_user_id', self.client.session)
+
+    def test_login_page_does_not_offer_disabled_social_login(self):
+        response = self.client.get('/accounts/login/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Facebook')
+        self.assertNotContains(response, '/accounts/facebook/login/')

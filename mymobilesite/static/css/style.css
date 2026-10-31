@@ -1059,6 +1059,54 @@ body.dark-mode .event-empty-state {
     align-self: flex-start;
 }
 
+.auth-page {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0 3rem;
+}
+
+.auth-card {
+    width: min(100%, 30rem);
+}
+
+.auth-card-body {
+    padding: 2.5rem;
+    text-align: center;
+}
+
+.auth-card-icon {
+    align-items: center;
+    border-radius: 999px;
+    display: inline-flex;
+    font-size: 1.5rem;
+    height: 4rem;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    width: 4rem;
+}
+
+.auth-card-icon--danger {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.auth-card-title {
+    border: 0;
+    color: #1f2937;
+    font-size: 1.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.auth-card-text {
+    color: var(--muted-text);
+    margin-bottom: 1.75rem;
+}
+
+.auth-card-form {
+    display: grid;
+    gap: 0.75rem;
+}
+
 .participant-rank {
     display: inline-flex;
     align-items: center;

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <div class="auth-page">
+    <div class="auth-card card">
+      <div class="card-body auth-card-body">
+        <div class="auth-card-icon auth-card-icon--danger" aria-hidden="true">
+          <i class="fas fa-sign-out-alt"></i>
+        </div>
+        <h1 class="auth-card-title">Vil du logge ut?</h1>
+        <p class="auth-card-text">Du blir logget ut av Borgenlekene på denne enheten.</p>
+        <form method="post" action="{% url 'account_logout' %}" class="auth-card-form">
+          {% csrf_token %}
+          {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}">
+          {% endif %}
+          <button type="submit" class="btn btn-danger w-100">
+            <i class="fas fa-sign-out-alt me-2"></i>Logg ut
+          </button>
+          <a href="{% url 'event_list' %}" class="btn btn-outline-secondary w-100">Avbryt</a>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -60,9 +60,6 @@ INSTALLED_APPS = [
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    # add providers you want to enable
-    "allauth.socialaccount.providers.facebook",
-
     "core",
     "django_extensions",
 ]
@@ -183,10 +180,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # django-allauth settings
 SITE_ID = 1
-
-# Facebook app credentials (read from .env)
-FACEBOOK_APP_ID = os.getenv('FACEBOOK_APP_ID')
-FACEBOOK_APP_SECRET = os.getenv('FACEBOOK_APP_SECRET')
 
 AUTHENTICATION_BACKENDS = [
     # Needed to login by username in Django admin, regardless of `allauth`

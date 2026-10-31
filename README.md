@@ -9,7 +9,7 @@ The project started from a simple idea: gather friends for a day of activities a
 - Event creation with date and start time
 - Event invitations
 - User registration and login
-- Optional Facebook login
+- Facebook login integration is currently disabled
 - Participant and nickname management
 - Tennis, running, football, basketball, and dice activities
 - Live running timer

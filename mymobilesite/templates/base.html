@@ -30,9 +30,12 @@
                 <a href="{% url 'portal' %}" class="btn btn-outline-secondary">
                     <i class="fas fa-user me-1"></i>Min Portal
                 </a>
-                <a href="{% url 'account_logout' %}" class="btn btn-outline-danger">
-                    <i class="fas fa-sign-out-alt me-1"></i>Logg ut
-                </a>
+                <form method="post" action="{% url 'account_logout' %}" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="fas fa-sign-out-alt me-1"></i>Logg ut
+                    </button>
+                </form>
             {% else %}
                 <a href="{% url 'account_login' %}" class="btn btn-primary">
                     <i class="fas fa-sign-in-alt me-1"></i>Logg inn
@@ -40,18 +43,6 @@
                 <a href="{% url 'account_signup' %}" class="btn btn-primary">
                     <i class="fas fa-user-plus me-1"></i>Registrer deg
                 </a>
-                {# Use django-allauth's provider_login_url if allauth is installed #}
-                {% load socialaccount %}
-                {% load social_utils %}
-                {% social_app_for "facebook" as has_fb %}
-                {% if has_fb %}
-                    {% provider_login_url 'facebook' process='login' as fb_login_url %}
-                    {% if fb_login_url %}
-                        <a href="{{ fb_login_url }}" class="btn btn-outline-primary">
-                            <i class="fab fa-facebook me-1"></i>Facebook
-                        </a>
-                    {% endif %}
-                {% endif %}
             {% endif %}
             </nav>
         </div>
