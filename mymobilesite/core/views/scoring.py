@@ -4,12 +4,8 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 
 from ..models import ACTIVITIES, Event, TennisMatch, RunningResult
-from ..ranking_writes import (
-    calculate_tennis_standings,
-    randomize_activity_rankings,
-    ranking_ids,
-    RankingIdentity,
-)
+from ..activity_results import calculate_tennis_standings, randomize_activity_rankings
+from ..ranking_writes import ranking_ids, RankingIdentity
 
 
 @require_POST

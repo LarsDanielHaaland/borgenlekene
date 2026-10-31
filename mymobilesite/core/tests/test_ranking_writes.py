@@ -65,6 +65,39 @@ class ManualRankingWriteTests(TestCase):
             [(self.second.pk, 1), (self.first.pk, 2)],
         )
 
+    def test_final_and_round_rankings_coexist(self):
+        final = save_manual_order(self.event, activity_id=2, order=[self.first.pk, self.second.pk])
+        round_result = save_manual_order(
+            self.event, activity_id=2, order=[self.second.pk, self.first.pk], round_num=1
+        )
+
+        self.assertTrue(final.success)
+        self.assertTrue(round_result.success)
+        self.assertEqual(
+            ActivityRanking.objects.filter(event=self.event, activity_id=2, round_number__isnull=True).count(),
+            2,
+        )
+        self.assertEqual(
+            ActivityRanking.objects.filter(event=self.event, activity_id=2, round_number=1).count(),
+            2,
+        )
+
+    def test_replacing_one_identity_preserves_the_other(self):
+        save_manual_order(self.event, activity_id=2, order=[self.first.pk, self.second.pk])
+        save_manual_order(self.event, activity_id=2, order=[self.second.pk, self.first.pk], round_num=1)
+
+        result = save_manual_order(self.event, activity_id=2, order=[self.second.pk, self.first.pk])
+
+        self.assertTrue(result.success)
+        self.assertEqual(
+            list(ActivityRanking.objects.filter(event=self.event, activity_id=2, round_number__isnull=True).order_by("rank").values_list("nickname_id", flat=True)),
+            [self.second.pk, self.first.pk],
+        )
+        self.assertEqual(
+            list(ActivityRanking.objects.filter(event=self.event, activity_id=2, round_number=1).order_by("rank").values_list("nickname_id", flat=True)),
+            [self.second.pk, self.first.pk],
+        )
+
     def test_saving_activity_order_recalculates_participant_totals(self):
         result = save_manual_order(
             self.event,

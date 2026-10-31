@@ -17,7 +17,13 @@ class ClaimOutcome(str, Enum):
     NICKNAME_UNAVAILABLE = "nickname_unavailable"
 
 
-def claim_nickname(event: Event, user, nickname: Nickname) -> ClaimOutcome:
+def _is_eligible_to_claim(event: Event, user) -> bool:
+    """Return whether a user may claim a nickname in an event.
+
+    Events without invitations remain open for claims. Once invitations exist,
+    the event owner, an email-matched user, or a legacy Facebook-linked user
+    with a Facebook invitation may claim.
+    """
     invitations = Invitation.objects.filter(event=event)
     invited = event.owner_id == user.pk
     if not invited:
@@ -34,7 +40,11 @@ def claim_nickname(event: Event, user, nickname: Nickname) -> ClaimOutcome:
                 Q(facebook_profile__isnull=False) & ~Q(facebook_profile="")
             ).exists()
 
-    if not invited:
+    return invited
+
+
+def claim_nickname(event: Event, user, nickname: Nickname) -> ClaimOutcome:
+    if not _is_eligible_to_claim(event, user):
         return ClaimOutcome.NOT_INVITED
 
     already_claimed_another_nickname = Nickname.objects.filter(

@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
 
-from ..ranking_writes import (
+from ..activity_results import (
     calculate_tennis_standings,
     delete_running_time as delete_running_time_write,
     record_running_time as record_running_time_write,
