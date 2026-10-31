@@ -1055,6 +1055,10 @@ body.dark-mode .event-empty-state {
     background: #f9fafb;
 }
 
+.participant-item-actions--stable {
+    align-self: flex-start;
+}
+
 .participant-rank {
     display: inline-flex;
     align-items: center;

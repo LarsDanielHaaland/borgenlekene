@@ -140,3 +140,7 @@ class SharedScoreboardTemplateTests(TestCase):
 
         tennis_response = self.get_page("tennis_tournament")
         self.assertContains(tennis_response, "tennis-match-row")
+
+    def test_participant_breakdown_toggle_stays_at_row_start_when_expanded(self):
+        response = self.get_page("event_detail")
+        self.assertContains(response, "participant-item-actions--stable")

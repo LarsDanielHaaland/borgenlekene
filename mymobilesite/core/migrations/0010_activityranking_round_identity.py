@@ -25,13 +25,13 @@ class Migration(migrations.Migration):
             name="round_number",
             field=models.IntegerField(blank=True, null=True),
         ),
-        migrations.RunPython(
-            decode_legacy_rounds,
-            migrations.RunPython.noop,
-        ),
         migrations.AlterUniqueTogether(
             name="activityranking",
             unique_together=set(),
+        ),
+        migrations.RunPython(
+            decode_legacy_rounds,
+            migrations.RunPython.noop,
         ),
         migrations.AddConstraint(
             model_name="activityranking",
