@@ -2,15 +2,15 @@ import json
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
-from django.db import transaction
 
 from ..ranking_writes import (
     calculate_tennis_standings,
+    delete_running_time as delete_running_time_write,
+    record_running_time as record_running_time_write,
+    record_tennis_match as record_tennis_match_write,
     save_manual_order,
-    update_running_rankings,
-    update_tennis_rankings,
 )
-from ..models import Event, Nickname, RunningResult, TennisMatch
+from ..models import Event
 
 @require_POST
 def record_tennis_match(request, pk):
@@ -21,30 +21,14 @@ def record_tennis_match(request, pk):
     event = get_object_or_404(Event, pk=pk)
     try:
         data = json.loads(request.body)
-        player1_obj = get_object_or_404(Nickname, id=data['player1_id'], event=event)
-        player2_obj = get_object_or_404(Nickname, id=data['player2_id'], event=event)
-        winner_obj = get_object_or_404(Nickname, id=data['winner_id'], event=event)
-
-        # Canonicalize ordering by ID
-        if player1_obj.id > player2_obj.id:
-            player1_obj, player2_obj = player2_obj, player1_obj
-
-        with transaction.atomic():
-            # Try to find an existing match with the canonical ordering
-            match = TennisMatch.objects.filter(event=event, player1=player1_obj, player2=player2_obj).first()
-            if match:
-                # Update winner
-                match.winner = winner_obj
-                match.save()
-                created = False
-            else:
-                match = TennisMatch.objects.create(
-                    event=event, player1=player1_obj, player2=player2_obj, winner=winner_obj
-                )
-                created = True
-
-            # Recalculate rankings and scores
-            update_tennis_rankings(event)
+        result = record_tennis_match_write(
+            event,
+            player1_id=data['player1_id'],
+            player2_id=data['player2_id'],
+            winner_id=data['winner_id'],
+        )
+        if not result.success:
+            return JsonResponse({'success': False, 'error': result.error})
 
         # Return success and the updated standings so the client can refresh
         standings = calculate_tennis_standings(event)
@@ -58,7 +42,11 @@ def record_tennis_match(request, pk):
             }
             for s in standings
         ]
-        return JsonResponse({'success': True, 'created': created, 'standings': standings_json})
+        return JsonResponse({
+            'success': True,
+            'created': result.created,
+            'standings': standings_json,
+        })
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
@@ -69,19 +57,15 @@ def record_running_time(request, pk):
     event = get_object_or_404(Event, pk=pk)
     try:
         data = json.loads(request.body)
-        nickname = get_object_or_404(Nickname, id=data['nickname_id'], event=event)
-        time_seconds = float(data['time_seconds'])
-        group_id = data.get('group_id')
-
-        with transaction.atomic():
-            rr, created = RunningResult.objects.update_or_create(
-                event=event,
-                nickname=nickname,
-                defaults={'time_seconds': time_seconds, 'group_id': group_id},
-            )
-            update_running_rankings(event)
-
-        return JsonResponse({'success': True, 'created': created})
+        result = record_running_time_write(
+            event,
+            nickname_id=data['nickname_id'],
+            time_seconds=data['time_seconds'],
+            group_id=data.get('group_id'),
+        )
+        if not result.success:
+            return JsonResponse({'success': False, 'error': result.error})
+        return JsonResponse({'success': True, 'created': result.created})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
@@ -92,11 +76,12 @@ def delete_running_time(request, pk):
     event = get_object_or_404(Event, pk=pk)
     try:
         data = json.loads(request.body)
-        nickname = get_object_or_404(Nickname, id=data['nickname_id'], event=event)
-
-        with transaction.atomic():
-            RunningResult.objects.filter(event=event, nickname=nickname).delete()
-            update_running_rankings(event)
+        result = delete_running_time_write(
+            event,
+            nickname_id=data['nickname_id'],
+        )
+        if not result.success:
+            return JsonResponse({'success': False, 'error': result.error})
 
         return JsonResponse({'success': True})
     except Exception as e:

@@ -42,19 +42,9 @@ class Event(models.Model):
         return self.nicknames.count()
 
     def get_dynamic_status(self):
-        """Return the status based on dates, unless manually set to featured."""
-        from django.utils import timezone
-        now = timezone.now()
-        if self.status == 'featured':
-            return 'featured'
-        if self.start_date and self.end_date:
-            if now < self.start_date:
-                return 'future'
-            elif self.start_date <= now <= self.end_date:
-                return 'ongoing'
-            else:
-                return 'past'
-        return self.status  # fallback to manual status if dates not set
+        from .event_lifecycle import status_for
+
+        return status_for(self)
 
 class Profile(models.Model):
     """Extra per-user data: a globally unique display name shown across the site."""
@@ -86,15 +76,32 @@ class ActivityRanking(models.Model):
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
     nickname = models.ForeignKey(Nickname, on_delete=models.CASCADE)
     activity_id = models.IntegerField()  # See ACTIVITIES for the canonical catalog.
+    round_number = models.IntegerField(null=True, blank=True)
     rank = models.IntegerField()  # 1=first place, 2=second place, etc.
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('event', 'nickname', 'activity_id')
-        ordering = ['activity_id', 'rank']
+        constraints = [
+            models.UniqueConstraint(
+                fields=('event', 'nickname', 'activity_id', 'round_number'),
+                condition=models.Q(round_number__isnull=False),
+                name='unique_activity_ranking_round',
+            ),
+            models.UniqueConstraint(
+                fields=('event', 'nickname', 'activity_id'),
+                condition=models.Q(round_number__isnull=True),
+                name='unique_activity_ranking_final',
+            ),
+        ]
+        ordering = ['activity_id', 'round_number', 'rank']
 
     def __str__(self):
-        return f"{self.nickname.name} - Activity {self.activity_id} - Rank {self.rank}"
+        round_label = (
+            f" - Round {self.round_number}"
+            if self.round_number is not None
+            else ""
+        )
+        return f"{self.nickname.name} - Activity {self.activity_id}{round_label} - Rank {self.rank}"
 
 class TennisMatch(models.Model):
     """Store tennis match results."""

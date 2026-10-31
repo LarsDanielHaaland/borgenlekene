@@ -46,7 +46,7 @@ class ManualRankingWriteTests(TestCase):
             ActivityRanking.objects.filter(pk=self.saved_ranking.pk).exists()
         )
 
-    def test_saves_round_order_with_composite_activity_id(self):
+    def test_saves_round_order_with_explicit_round_identity(self):
         result = save_manual_order(
             self.event,
             activity_id=2,
@@ -57,7 +57,8 @@ class ManualRankingWriteTests(TestCase):
         self.assertTrue(result.success)
         rankings = ActivityRanking.objects.filter(
             event=self.event,
-            activity_id=23,
+            activity_id=2,
+            round_number=3,
         ).order_by("rank")
         self.assertEqual(
             list(rankings.values_list("nickname_id", "rank")),

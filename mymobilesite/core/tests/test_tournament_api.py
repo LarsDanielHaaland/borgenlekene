@@ -35,8 +35,7 @@ class FootballApiTest(TestCase):
         expected = N * (N + 1) // 2
         self.assertEqual(total_scores_sum, expected)
 
-    def test_save_round_order_stores_composite_activity(self):
-        # Save a per-round order (round=1) and ensure activity_id stored as 2*10+1 = 21
+    def test_save_round_order_stores_explicit_round_identity(self):
         url = reverse('set_manual_activity_order_football_path', kwargs={'pk': self.event.pk})
         order = [n.id for n in self.nicknames]
         payload = {'activity_id': 2, 'order': order, 'round': 1}
@@ -45,7 +44,11 @@ class FootballApiTest(TestCase):
         data = resp.json()
         self.assertTrue(data.get('success'))
 
-        rankings = ActivityRanking.objects.filter(event=self.event, activity_id=21).order_by('rank')
+        rankings = ActivityRanking.objects.filter(
+            event=self.event,
+            activity_id=2,
+            round_number=1,
+        ).order_by('rank')
         self.assertEqual(rankings.count(), len(self.nicknames))
 
     def test_invalid_order_preserves_saved_ranking_and_returns_error(self):

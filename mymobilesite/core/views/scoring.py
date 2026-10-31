@@ -3,10 +3,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 
-from ..models import ACTIVITIES, Event, ActivityRanking, TennisMatch, RunningResult
+from ..models import ACTIVITIES, Event, TennisMatch, RunningResult
 from ..ranking_writes import (
     calculate_tennis_standings,
     randomize_activity_rankings,
+    ranking_ids,
+    RankingIdentity,
 )
 
 
@@ -241,15 +243,11 @@ def football_tournament(request, pk):
     event = get_object_or_404(Event, pk=pk)
     nicknames = list(event.nicknames.order_by('id').all())
 
-    # Load any existing manual rankings for this activity and per-round
-    # We store per-round rankings using a composite activity id: activity_id*10 + round
     def load_ranking_for(round_num=None):
-        if round_num is None:
-            aid = 2
-        else:
-            aid = 2 * 10 + int(round_num)
-        rankings = ActivityRanking.objects.filter(event=event, activity_id=aid).order_by('rank').select_related('nickname')
-        return [r.nickname.id for r in rankings]
+        return ranking_ids(
+            event,
+            RankingIdentity(activity_id=2, round_number=round_num),
+        )
 
     round_rankings = {
         1: load_ranking_for(1),
@@ -284,12 +282,10 @@ def basketball_tournament(request, pk):
     nicknames = list(event.nicknames.order_by('id').all())
 
     def load_ranking_for(round_num=None):
-        if round_num is None:
-            aid = 3
-        else:
-            aid = 3 * 10 + int(round_num)
-        rankings = ActivityRanking.objects.filter(event=event, activity_id=aid).order_by('rank').select_related('nickname')
-        return [r.nickname.id for r in rankings]
+        return ranking_ids(
+            event,
+            RankingIdentity(activity_id=3, round_number=round_num),
+        )
 
     round_rankings = {
         1: load_ranking_for(1),
@@ -324,8 +320,7 @@ def dice_tournament(request, pk):
     nicknames = list(event.nicknames.order_by('id').all())
 
     def load_ranking_for_final():
-        rankings = ActivityRanking.objects.filter(event=event, activity_id=5).order_by('rank').select_related('nickname')
-        return [r.nickname.id for r in rankings]
+        return ranking_ids(event, RankingIdentity(activity_id=5))
 
     final_ranking = load_ranking_for_final()
 

@@ -22,7 +22,7 @@ class NicknameAdmin(admin.ModelAdmin):
 
 @admin.register(ActivityRanking)
 class ActivityRankingAdmin(admin.ModelAdmin):
-	list_display = ('event', 'nickname', 'activity_id', 'rank', 'created_at')
+	list_display = ('event', 'nickname', 'activity_id', 'round_number', 'rank', 'created_at')
 
 
 @admin.register(TennisMatch)

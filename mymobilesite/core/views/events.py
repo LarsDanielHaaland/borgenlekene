@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db import IntegrityError
 
 from ..claiming import ClaimOutcome, claim_nickname as perform_nickname_claim
+from ..event_lifecycle import group_visible_events
 from ..models import ACTIVITIES, Event, ActivityRanking, Nickname
 from ..forms import EventForm, NicknameForm
 from ..forms import InviteForm
@@ -116,17 +117,7 @@ def event_list(request):
         | Q(pk__in=user_event_ids)
     ).distinct()
 
-    featured_events = [e for e in all_events if e.get_dynamic_status() == 'featured']
-    ongoing_events = [e for e in all_events if e.get_dynamic_status() == 'ongoing' and e.pk in user_event_ids]
-    past_events = [e for e in all_events if e.get_dynamic_status() == 'past' and e.pk in user_event_ids]
-    future_events = [e for e in all_events if e.get_dynamic_status() == 'future' and e.pk in user_event_ids]
-
-    context = {
-        'featured_events': featured_events,
-        'ongoing_events': ongoing_events,
-        'past_events': past_events,
-        'future_events': future_events,
-    }
+    context = group_visible_events(all_events, user_event_ids)
     return render(request, 'core/event_list.html', context)
 
 def event_detail(request, pk):
